@@ -6,22 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Popote B4</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load React first -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Load Babel -->  
-  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
 </head>
-<body style="margin:0;padding:0;background:#f0f9ff">
-  <div id="root">
-    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#0369a1;flex-direction:column;gap:16px">
-      <div style="font-size:48px">⏳</div>
-      <div style="font-size:18px;font-weight:bold">Chargement de Popote B4...</div>
-      <div style="font-size:12px;color:#7dd3fc">Première ouverture : 10-15 secondes</div>
-    </div>
-  </div>
-  <script type="text/babel" data-type="module">
+<body style="margin:0;padding:0;">
+  <div id="root"></div>
+  <script>
 const { useState, useEffect, useCallback } = React;
+
+function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === ‘optionalAccess’ || op === ‘optionalCall’) && value == null) { return undefined; } if (op === ‘access’ || op === ‘optionalAccess’) { lastAccessLHS = value; value = fn(value); } else if (op === ‘call’ || op === ‘optionalCall’) { value = fn((…args) => value.call(lastAccessLHS, …args)); lastAccessLHS = undefined; } } return value; }
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
 const SB_URL = “https://mfarjfsmgloycxfqwcrz.supabase.co”;
@@ -112,35 +105,35 @@ orange: “bg-orange-100 text-orange-700 border-orange-200”,
 gray:   “bg-slate-100 text-slate-500 border-slate-200”,
 green:  “bg-emerald-100 text-emerald-700 border-emerald-200”,
 };
-return <span className={“text-xs font-bold px-2 py-0.5 rounded-full border “ + (c[color] || c.gray)}>{children}</span>;
+return React.createElement(‘span’, { className: “text-xs font-bold px-2 py-0.5 rounded-full border “ + (c[color] || c.gray),}, children);
 }
 
 function Toast({ msg, type, onClose }) {
 useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
 const bg = type === “success” ? “bg-emerald-500” : type === “error” ? “bg-red-500” : “bg-sky-500”;
 return (
-<div className={“fixed top-4 right-4 z-50 “ + bg + “ text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3”}
-style={{ animation: “slideInRight 0.25s ease” }}>
-<span>{type === “success” ? “✅” : type === “error” ? “❌” : “ℹ️”}</span>
-<span className="font-semibold text-sm">{msg}</span>
-<button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 text-xl leading-none">×</button>
-</div>
+React.createElement(‘div’, { className: “fixed top-4 right-4 z-50 “ + bg + “ text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3”,
+style: { animation: “slideInRight 0.25s ease” },}
+, React.createElement(‘span’, null, type === “success” ? “✅” : type === “error” ? “❌” : “ℹ️”)
+, React.createElement(‘span’, { className: “font-semibold text-sm” ,}, msg)
+, React.createElement(‘button’, { onClick: onClose, className: “ml-2 opacity-60 hover:opacity-100 text-xl leading-none”    ,}, “×”)
+)
 );
 }
 
 function Modal({ title, children, onClose }) {
 return (
-<div className=“fixed inset-0 z-40 flex items-center justify-center p-4”
-style={{ background: “rgba(15,23,42,0.55)” }}>
-<div className=“bg-white border border-sky-100 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4”
-style={{ animation: “slideIn 0.2s ease” }}>
-<div className="flex items-center justify-between">
-<span className="font-bold text-base text-sky-700">{title}</span>
-<button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
-</div>
-{children}
-</div>
-</div>
+React.createElement(‘div’, { className: “fixed inset-0 z-40 flex items-center justify-center p-4”      ,
+style: { background: “rgba(15,23,42,0.55)” },}
+, React.createElement(‘div’, { className: “bg-white border border-sky-100 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4”        ,
+style: { animation: “slideIn 0.2s ease” },}
+, React.createElement(‘div’, { className: “flex items-center justify-between”  ,}
+, React.createElement(‘span’, { className: “font-bold text-base text-sky-700”  ,}, title)
+, React.createElement(‘button’, { onClick: onClose, className: “text-slate-400 hover:text-slate-700 text-2xl leading-none”   ,}, “×”)
+)
+, children
+)
+)
 );
 }
 
@@ -162,61 +155,64 @@ const inputCls = “w-full bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 
 const focusBlue = { onFocus: e => (e.target.style.borderColor = “#0ea5e9”), onBlur: e => (e.target.style.borderColor = “”) };
 
 return (
-<div className=“min-h-screen flex items-center justify-center p-4”
-style={{ background: “linear-gradient(135deg,#f0f9ff,#e0f2fe,#bae6fd)”, fontFamily: “Nunito,sans-serif” }}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap'); @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}} @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}} .slide-in{animation:slideIn .2s ease} .pcard{transition:all .13s;cursor:pointer} .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,165,233,.15)} .pcard:active{transform:scale(.96)} ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#f0f9ff}::-webkit-scrollbar-thumb{background:#7dd3fc;border-radius:4px}`}</style>
-<div style={{ animation: “fadeUp .4s ease”, width: “100%”, maxWidth: 360 }}>
-<div style={{ textAlign: “center”, marginBottom: 32 }}>
-<img src={“data:image/png;base64,” + LOGO_B64} alt=“logo”
-className=“mx-auto mb-4 object-cover rounded-3xl”
-style={{ width: 96, height: 96, boxShadow: “0 8px 32px rgba(14,165,233,.25),0 2px 8px rgba(0,0,0,.12)” }} />
-<div className="text-2xl font-black text-sky-700 tracking-wide">POPOTE B4</div>
-{loading
-? <div className=“text-xs text-sky-400 font-semibold mt-1” style={{ animation: “blink 1.5s infinite” }}>🔄 Connexion base de données…</div>
-: <div className=“text-xs font-semibold mt-1” style={{ color: “#10b981” }}>● Base connectée</div>
-}
-</div>
-<div className=“bg-white rounded-3xl shadow-xl border border-sky-100” style={{ padding: 28 }}>
-<div style={{ marginBottom: 16 }}>
-<label className=“text-xs font-bold text-sky-600 uppercase tracking-widest block” style={{ marginBottom: 8 }}>Identifiant</label>
-<input value={username} onChange={e => setUsername(e.target.value)}
-onKeyDown={e => e.key === “Enter” && attempt()}
-placeholder=“votre identifiant” className={inputCls} {…focusBlue} />
-</div>
-<div style={{ marginBottom: 16 }}>
-<label className=“text-xs font-bold text-sky-600 uppercase tracking-widest block” style={{ marginBottom: 8 }}>Mot de passe</label>
-<div style={{ position: “relative” }}>
-<input type={showPwd ? “text” : “password”} value={password}
-onChange={e => setPassword(e.target.value)}
-onKeyDown={e => e.key === “Enter” && attempt()}
-placeholder=”••••••••” className={inputCls}
-style={{ paddingRight: 48 }} {…focusBlue} />
-<button onClick={() => setShowPwd(p => !p)}
-style={{ position: “absolute”, right: 12, top: “50%”, transform: “translateY(-50%)”, fontSize: 18 }}
-className=“text-slate-400 hover:text-sky-500”>
-{showPwd ? “🙈” : “👁️”}
-</button>
-</div>
-</div>
-{error && (
-<div className=“bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 text-center font-semibold”
-style={{ padding: “8px 12px”, marginBottom: 16 }}>❌ {error}</div>
-)}
-<button onClick={attempt} disabled={loading}
-className=“w-full font-black text-white text-sm rounded-2xl shadow-md”
-style={{ padding: “12px 0”, background: “linear-gradient(135deg,#38bdf8,#0369a1)”, opacity: loading ? .6 : 1 }}>
-{loading ? “Chargement…” : “Se connecter →”}
-</button>
-</div>
-<div className=“bg-white rounded-2xl border border-sky-100 text-xs text-slate-500”
-style={{ marginTop: 16, padding: 12, opacity: .85 }}>
-<div className=“font-bold text-slate-600” style={{ marginBottom: 4 }}>Comptes par défaut :</div>
-<div>· seigneur / seigneur999</div>
-<div>· admin / admin123</div>
-<div>· caissier / caisse123</div>
-</div>
-</div>
-</div>
+React.createElement(‘div’, { className: “min-h-screen flex items-center justify-center p-4”    ,
+style: { background: “linear-gradient(135deg,#f0f9ff,#e0f2fe,#bae6fd)”, fontFamily: “Nunito,sans-serif” },}
+, React.createElement(‘style’, null, `@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap'); @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}} @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}} .slide-in{animation:slideIn .2s ease} .pcard{transition:all .13s;cursor:pointer} .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,165,233,.15)} .pcard:active{transform:scale(.96)} ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#f0f9ff}::-webkit-scrollbar-thumb{background:#7dd3fc;border-radius:4px}`)
+, React.createElement(‘div’, { style: { animation: “fadeUp .4s ease”, width: “100%”, maxWidth: 360 },}
+, React.createElement(‘div’, { style: { textAlign: “center”, marginBottom: 32 },}
+, React.createElement(‘img’, { src: “data:image/png;base64,” + LOGO_B64, alt: “logo”,
+className: “mx-auto mb-4 object-cover rounded-3xl”   ,
+style: { width: 96, height: 96, boxShadow: “0 8px 32px rgba(14,165,233,.25),0 2px 8px rgba(0,0,0,.12)” },} )
+, React.createElement(‘div’, { className: “text-2xl font-black text-sky-700 tracking-wide”   ,}, “POPOTE B4” )
+, loading
+? React.createElement(‘div’, { className: “text-xs text-sky-400 font-semibold mt-1”   , style: { animation: “blink 1.5s infinite” },}, “🔄 Connexion base de données…”    )
+: React.createElement(‘div’, { className: “text-xs font-semibold mt-1”  , style: { color: “#10b981” },}, “● Base connectée”  )
+
+```
+    )
+    , React.createElement('div', { className: "bg-white rounded-3xl shadow-xl border border-sky-100"    , style: { padding: 28 },}
+      , React.createElement('div', { style: { marginBottom: 16 },}
+        , React.createElement('label', { className: "text-xs font-bold text-sky-600 uppercase tracking-widest block"     , style: { marginBottom: 8 },}, "Identifiant")
+        , React.createElement('input', { value: username, onChange: e => setUsername(e.target.value),
+          onKeyDown: e => e.key === "Enter" && attempt(),
+          placeholder: "votre identifiant" , className: inputCls, ...focusBlue,} )
+      )
+      , React.createElement('div', { style: { marginBottom: 16 },}
+        , React.createElement('label', { className: "text-xs font-bold text-sky-600 uppercase tracking-widest block"     , style: { marginBottom: 8 },}, "Mot de passe"  )
+        , React.createElement('div', { style: { position: "relative" },}
+          , React.createElement('input', { type: showPwd ? "text" : "password", value: password,
+            onChange: e => setPassword(e.target.value),
+            onKeyDown: e => e.key === "Enter" && attempt(),
+            placeholder: "••••••••", className: inputCls,
+            style: { paddingRight: 48 }, ...focusBlue,} )
+          , React.createElement('button', { onClick: () => setShowPwd(p => !p),
+            style: { position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 18 },
+            className: "text-slate-400 hover:text-sky-500" ,}
+            , showPwd ? "🙈" : "👁️"
+          )
+        )
+      )
+      , error && (
+        React.createElement('div', { className: "bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 text-center font-semibold"       ,
+          style: { padding: "8px 12px", marginBottom: 16 },}, "❌ " , error)
+      )
+      , React.createElement('button', { onClick: attempt, disabled: loading,
+        className: "w-full font-black text-white text-sm rounded-2xl shadow-md"     ,
+        style: { padding: "12px 0", background: "linear-gradient(135deg,#38bdf8,#0369a1)", opacity: loading ? .6 : 1 },}
+        , loading ? "Chargement..." : "Se connecter →"
+      )
+    )
+    , React.createElement('div', { className: "bg-white rounded-2xl border border-sky-100 text-xs text-slate-500"     ,
+      style: { marginTop: 16, padding: 12, opacity: .85 },}
+      , React.createElement('div', { className: "font-bold text-slate-600" , style: { marginBottom: 4 },}, "Comptes par défaut :"   )
+      , React.createElement('div', null, "· seigneur / seigneur999"   )
+      , React.createElement('div', null, "· admin / admin123"   )
+      , React.createElement('div', null, "· caissier / caisse123"   )
+    )
+  )
+)
+```
+
 );
 }
 
@@ -257,8 +253,8 @@ const [refundId,      setRefundId]      = useState(null);
 const [recapEmail,    setRecapEmail]    = useState(””);
 const [recapPeriod,   setRecapPeriod]   = useState(“today”);
 
-const isSeigneur = currentUser?.role === “seigneur”;
-const isAdmin    = currentUser?.role === “admin” || isSeigneur;
+const isSeigneur = _optionalChain([currentUser, ‘optionalAccess’, _2 => _2.role]) === “seigneur”;
+const isAdmin    = _optionalChain([currentUser, ‘optionalAccess’, _3 => _3.role]) === “admin” || isSeigneur;
 const showToast  = useCallback((msg, type=“success”) => setToast({ msg, type }), []);
 const total      = cart.reduce((s, i) => s + i.price * i.qty, 0);
 const visUsers   = isSeigneur ? users : users.filter(u => u.role !== “seigneur”);
@@ -295,14 +291,14 @@ useEffect(() => {
 if (!dbReady || syncStatus === “error”) return;
 const unsubs = [
 dbListen(“products”, (ev, r) => setProducts(prev =>
-ev===“DELETE” ? prev.filter(x=>x.id!==r?.id) :
+ev===“DELETE” ? prev.filter(x=>x.id!==_optionalChain([r, ‘optionalAccess’, _4 => _4.id])) :
 ev===“INSERT” ? […prev.filter(x=>x.id!==r.id), r] :
 prev.map(x=>x.id===r.id?r:x)
 )),
 dbListen(“members”, (ev, r) => {
 const rec = r ? { …r, transactions: r.transactions||[] } : r;
 setMembers(prev =>
-ev===“DELETE” ? prev.filter(x=>x.id!==rec?.id) :
+ev===“DELETE” ? prev.filter(x=>x.id!==_optionalChain([rec, ‘optionalAccess’, _5 => _5.id])) :
 ev===“INSERT” ? […prev.filter(x=>x.id!==rec.id), rec] :
 prev.map(x=>x.id===rec.id?rec:x)
 );
@@ -310,13 +306,13 @@ prev.map(x=>x.id===rec.id?rec:x)
 dbListen(“sales”, (ev, r) => {
 const rec = r ? { …r, items:r.items||[], refunded:!!r.refunded, refundedBy:r.refunded_by, refundDate:r.refund_date } : r;
 setSales(prev =>
-ev===“DELETE” ? prev.filter(x=>x.id!==rec?.id) :
+ev===“DELETE” ? prev.filter(x=>x.id!==_optionalChain([rec, ‘optionalAccess’, _6 => _6.id])) :
 ev===“INSERT” ? [rec, …prev.filter(x=>x.id!==rec.id)] :
 prev.map(x=>x.id===rec.id?rec:x)
 );
 }),
 dbListen(“users”, (ev, r) => setUsers(prev =>
-ev===“DELETE” ? prev.filter(x=>x.id!==r?.id) :
+ev===“DELETE” ? prev.filter(x=>x.id!==_optionalChain([r, ‘optionalAccess’, _7 => _7.id])) :
 ev===“INSERT” ? […prev.filter(x=>x.id!==r.id), r] :
 prev.map(x=>x.id===r.id?r:x)
 )),
@@ -324,10 +320,10 @@ prev.map(x=>x.id===r.id?r:x)
 return () => unsubs.forEach(fn => fn && fn());
 }, [dbReady, syncStatus]);
 
-if (!dbReady) return <LoginScreen users={[]} loading={true} onLogin={() => {}} />;
+if (!dbReady) return React.createElement(LoginScreen, { users: [], loading: true, onLogin: () => {},} );
 if (!currentUser) return (
-<LoginScreen users={users} loading={false}
-onLogin={u => { setCurrentUser({ …u, displayName: u.display_name }); setTab(“caisse”); }} />
+React.createElement(LoginScreen, { users: users, loading: false,
+onLogin: u => { setCurrentUser({ …u, displayName: u.display_name }); setTab(“caisse”); },} )
 );
 
 const dname = currentUser.display_name || currentUser.displayName || “?”;
@@ -359,7 +355,7 @@ dbUpsert(“sales”, [{ …sale, refunded_by:null, refund_date:null }]),
 ]);
 setProducts(prev => prev.map(p => { const u=stockUpd.find(x=>x.id===p.id); return u||p; }));
 setSales(prev => [sale, …prev]);
-} catch { showToast(“Erreur sync”, “error”); }
+} catch (e2) { showToast(“Erreur sync”, “error”); }
 showToast(“Paiement validé – “ + total.toFixed(2) + “€”);
 clrCart();
 }
@@ -367,7 +363,7 @@ async function payTPE() {
 if (!cart.length) return;
 setTpeStatus(“pending”);
 try { await launchSumUp(total, cart.map(i=>i.qty+“x”+i.name).join(”, “)); await finalize(“TPE SumUp”); setTpeStatus(“success”); setTimeout(()=>setTpeStatus(“idle”),2000); }
-catch { setTpeStatus(“error”); showToast(“Erreur TPE”,“error”); setTimeout(()=>setTpeStatus(“idle”),2000); }
+catch (e3) { setTpeStatus(“error”); showToast(“Erreur TPE”,“error”); setTimeout(()=>setTpeStatus(“idle”),2000); }
 }
 const payCash = () => finalize(“Especes”);
 async function payMember() {
@@ -377,7 +373,7 @@ if (m.balance < total) { showToast(“Solde insuffisant (”+m.balance.toFixed(2
 const bal = parseFloat((m.balance-total).toFixed(2));
 const txs = […(m.transactions||[]), { date:new Date().toISOString(), amount:-total, label:cart.map(i=>i.qty+“x “+i.name).join(”, “) }];
 try { await dbPatch(“members”, m.id, { balance:bal, transactions:txs }); setMembers(prev=>prev.map(x=>x.id===m.id?{…x,balance:bal,transactions:txs}:x)); }
-catch { showToast(“Erreur sync membre”,“error”); }
+catch (e4) { showToast(“Erreur sync membre”,“error”); }
 await finalize(“Compte - “ + m.name);
 }
 
@@ -386,7 +382,7 @@ async function addMember() {
 if (!newMemberName.trim()) return;
 const m = { id:Date.now(), name:newMemberName.trim(), balance:0, transactions:[] };
 try { await dbUpsert(“members”,[m]); setMembers(prev=>[…prev,m]); showToast(“Membre ajoute !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e5) { showToast(“Erreur”,“error”); }
 setNewMemberName(””);
 }
 async function recharge(memberId, amount) {
@@ -396,7 +392,7 @@ const m = members.find(x=>x.id===memberId);
 const bal = parseFloat((m.balance+amt).toFixed(2));
 const txs = […(m.transactions||[]), { date:new Date().toISOString(), amount:amt, label:“Rechargement” }];
 try { await dbPatch(“members”,memberId,{balance:bal,transactions:txs}); setMembers(prev=>prev.map(x=>x.id===memberId?{…x,balance:bal,transactions:txs}:x)); showToast(”+”+amt.toFixed(2)+“€ credite !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e6) { showToast(“Erreur”,“error”); }
 setRechargeId(null); setRechargeAmt(””);
 }
 
@@ -407,27 +403,27 @@ if (users.find(u=>u.username===newUser.username)) { showToast(“Identifiant dej
 const role = (!isSeigneur&&newUser.role===“seigneur”)?“admin”:newUser.role;
 const u = { …newUser, role, id:Date.now() };
 try { await dbUpsert(“users”,[u]); setUsers(prev=>[…prev,u]); showToast(“Utilisateur cree !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e7) { showToast(“Erreur”,“error”); }
 setNewUser({ username:””, password:””, role:“user”, display_name:”” }); setShowAddUser(false);
 }
 async function removeUser(id) {
 if (currentUser.id===id) { showToast(“Tu ne peux pas te supprimer”,“error”); return; }
-if (users.find(u=>u.id===id)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+if (_optionalChain([users, ‘access’, _8 => _8.find, ‘call’, _9 => _9(u=>u.id===id), ‘optionalAccess’, _10 => _10.role])===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
 try { await dbDelete(“users”,id); setUsers(prev=>prev.filter(u=>u.id!==id)); showToast(“Supprime”,“error”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e8) { showToast(“Erreur”,“error”); }
 }
 async function flipRole(id) {
 if (currentUser.id===id) { showToast(“Pas ton propre role”,“error”); return; }
-if (users.find(u=>u.id===id)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
-const nr = users.find(u=>u.id===id)?.role===“admin”?“user”:“admin”;
+if (_optionalChain([users, ‘access’, _11 => _11.find, ‘call’, _12 => _12(u=>u.id===id), ‘optionalAccess’, _13 => _13.role])===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+const nr = _optionalChain([users, ‘access’, _14 => _14.find, ‘call’, _15 => _15(u=>u.id===id), ‘optionalAccess’, _16 => _16.role])===“admin”?“user”:“admin”;
 try { await dbPatch(“users”,id,{role:nr}); setUsers(prev=>prev.map(u=>u.id===id?{…u,role:nr}:u)); showToast(“Role modifie !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e9) { showToast(“Erreur”,“error”); }
 }
 async function savePwd() {
-if (!editPwd?.newPwd?.trim()) { showToast(“Mot de passe vide”,“error”); return; }
-if (users.find(u=>u.id===editPwd.uid)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+if (!_optionalChain([editPwd, ‘optionalAccess’, _17 => _17.newPwd, ‘optionalAccess’, _18 => _18.trim, ‘call’, _19 => _19()])) { showToast(“Mot de passe vide”,“error”); return; }
+if (_optionalChain([users, ‘access’, _20 => _20.find, ‘call’, _21 => _21(u=>u.id===editPwd.uid), ‘optionalAccess’, _22 => _22.role])===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
 try { await dbPatch(“users”,editPwd.uid,{password:editPwd.newPwd}); setUsers(prev=>prev.map(u=>u.id===editPwd.uid?{…u,password:editPwd.newPwd}:u)); setEditPwd(null); showToast(“Mot de passe mis a jour !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e10) { showToast(“Erreur”,“error”); }
 }
 
 // ── PRODUITS ─────────────────────────────────────────────────────────────
@@ -436,20 +432,20 @@ const p=parseFloat(newProd.price), s=parseInt(newProd.stock);
 if (!newProd.name.trim()||isNaN(p)||p<=0||isNaN(s)||s<0) { showToast(“Donnees invalides”,“error”); return; }
 const prod = { id:Date.now(), name:newProd.name.trim(), emoji:newProd.emoji||“🛒”, price:p, stock:s, category:newProd.category };
 try { await dbUpsert(“products”,[prod]); setProducts(prev=>[…prev,prod]); showToast(“Produit ajoute !”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e11) { showToast(“Erreur”,“error”); }
 setNewProd({ name:””, emoji:“🛒”, price:””, stock:””, category:“boisson” }); setShowAddProd(false);
 }
 async function deleteProd(id) {
 try { await dbDelete(“products”,id); setProducts(prev=>prev.filter(p=>p.id!==id)); showToast(“Supprime”,“error”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e12) { showToast(“Erreur”,“error”); }
 }
 async function updPrice(id,price) {
 try { await dbPatch(“products”,id,{price}); setProducts(prev=>prev.map(x=>x.id===id?{…x,price}:x)); showToast(“Prix mis a jour”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e13) { showToast(“Erreur”,“error”); }
 }
 async function updStock(id,stock) {
 try { await dbPatch(“products”,id,{stock}); setProducts(prev=>prev.map(x=>x.id===id?{…x,stock}:x)); showToast(“Stock mis a jour”); }
-catch { showToast(“Erreur”,“error”); }
+catch (e14) { showToast(“Erreur”,“error”); }
 }
 
 // ── REMBOURSEMENT ────────────────────────────────────────────────────────
@@ -475,7 +471,7 @@ setMembers(prev=>prev.map(x=>x.id===m.id?{…x,balance:bal,transactions:txs}:x))
 setProducts(prev=>prev.map(p=>{const u=stockUpd.find(x=>x.id===p.id);return u||p;}));
 setSales(prev=>prev.map(s=>s.id===sid?{…s,refunded:true,refundedBy:dname,refundDate:new Date().toISOString()}:s));
 setRefundId(null); showToast(“Remboursement effectue !”);
-} catch { showToast(“Erreur remboursement”,“error”); }
+} catch (e15) { showToast(“Erreur remboursement”,“error”); }
 }
 
 // ── RECAP EMAIL ──────────────────────────────────────────────────────────
@@ -489,7 +485,7 @@ if (recapPeriod===“today”) return d.toDateString()===now.toDateString();
 const w=new Date(now); w.setDate(now.getDate()-7); return d>=w;
 });
 const ca = f.reduce((s,v)=>s+v.total,0);
-const lines = f.map(s=>new Date(s.date).toLocaleString(“fr-FR”)+”|”+s.items?.map(i=>i.qty+“x”+i.name).join(”,”)+”|”+s.total.toFixed(2)+“EUR|”+s.method+”|”+s.operator+(s.refunded?” [REMBOURSE]”:””)).join(”\n”);
+const lines = f.map(s=>new Date(s.date).toLocaleString(“fr-FR”)+”|”+_optionalChain([s, ‘access’, _23 => _23.items, ‘optionalAccess’, _24 => _24.map, ‘call’, _25 => _25(i=>i.qty+“x”+i.name), ‘access’, _26 => _26.join, ‘call’, _27 => _27(”,”)])+”|”+s.total.toFixed(2)+“EUR|”+s.method+”|”+s.operator+(s.refunded?” [REMBOURSE]”:””)).join(”\n”);
 const sub = encodeURIComponent(“Recap POPOTE B4 - “+new Date().toLocaleDateString(“fr-FR”));
 const body = encodeURIComponent(“RECAP POPOTE B4\nVentes: “+f.length+”\nCA: “+ca.toFixed(2)+“EUR\n\n”+lines);
 window.location.href = “mailto:”+recapEmail+”?subject=”+sub+”&body=”+body;
@@ -498,7 +494,7 @@ showToast(“Ouverture messagerie…”,“info”);
 
 // ── STATS ────────────────────────────────────────────────────────────────
 const totalCA   = sales.reduce((s,v)=>s+v.total,0);
-const topProds  = products.map(p=>({…p,sold:sales.reduce((s,v)=>s+(v.items?.find(i=>i.id===p.id)?.qty||0),0)})).sort((a,b)=>b.sold-a.sold).slice(0,5);
+const topProds  = products.map(p=>({…p,sold:sales.reduce((s,v)=>s+(_optionalChain([v, ‘access’, _28 => _28.items, ‘optionalAccess’, _29 => _29.find, ‘call’, _30 => _30(i=>i.id===p.id), ‘optionalAccess’, _31 => _31.qty])||0),0)})).sort((a,b)=>b.sold-a.sold).slice(0,5);
 const filtProd  = filterCat===“tout” ? products : products.filter(p=>p.category===filterCat);
 const medals    = [“🥇”,“🥈”,“🥉”];
 const vendors   = (() => {
@@ -519,459 +515,459 @@ const tabs = [
 const BG = “linear-gradient(135deg,#38bdf8,#0369a1)”;
 
 return (
-<div className=“min-h-screen flex flex-col”
-style={{ background:“linear-gradient(160deg,#f0f9ff,#e0f2fe,#f8fafc)”, fontFamily:“Nunito,sans-serif”, color:”#1e293b” }}>
+React.createElement(‘div’, { className: “min-h-screen flex flex-col”  ,
+style: { background:“linear-gradient(160deg,#f0f9ff,#e0f2fe,#f8fafc)”, fontFamily:“Nunito,sans-serif”, color:”#1e293b” },}
 
 ```
-  {toast && <Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)} />}
+  , toast && React.createElement(Toast, { msg: toast.msg, type: toast.type, onClose: ()=>setToast(null),} )
 
-  {editPwd && (
-    <Modal title="🔑 Modifier mot de passe" onClose={()=>setEditPwd(null)}>
-      <div className="text-xs text-slate-500 mb-1">Compte : <b>{users.find(u=>u.id===editPwd.uid)?.display_name}</b></div>
-      <input value={editPwd.newPwd} onChange={e=>setEditPwd(p=>({...p,newPwd:e.target.value}))}
-        onKeyDown={e=>e.key==="Enter"&&savePwd()} placeholder="Nouveau mot de passe" className={inp} {...fa} />
-      <button onClick={savePwd} className="w-full py-2.5 rounded-xl font-bold text-white text-sm" style={{background:BG}}>Enregistrer</button>
-    </Modal>
-  )}
+  , editPwd && (
+    React.createElement(Modal, { title: "🔑 Modifier mot de passe"    , onClose: ()=>setEditPwd(null),}
+      , React.createElement('div', { className: "text-xs text-slate-500 mb-1"  ,}, "Compte : "  , React.createElement('b', null, _optionalChain([users, 'access', _32 => _32.find, 'call', _33 => _33(u=>u.id===editPwd.uid), 'optionalAccess', _34 => _34.display_name])))
+      , React.createElement('input', { value: editPwd.newPwd, onChange: e=>setEditPwd(p=>({...p,newPwd:e.target.value})),
+        onKeyDown: e=>e.key==="Enter"&&savePwd(), placeholder: "Nouveau mot de passe"   , className: inp, ...fa,} )
+      , React.createElement('button', { onClick: savePwd, className: "w-full py-2.5 rounded-xl font-bold text-white text-sm"     , style: {background:BG},}, "Enregistrer")
+    )
+  )
 
-  {showAddProd && (
-    <Modal title="➕ Nouveau produit" onClose={()=>setShowAddProd(false)}>
-      <div className="space-y-3">
-        <div className="flex gap-2">
-          <input value={newProd.emoji} onChange={e=>setNewProd(p=>({...p,emoji:e.target.value}))}
-            className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-center text-2xl w-16 outline-none" {...fa} />
-          <input value={newProd.name} onChange={e=>setNewProd(p=>({...p,name:e.target.value}))}
-            placeholder="Nom du produit" className={inp} {...fa} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div><label className="text-xs font-bold text-sky-600 block mb-1">Prix (€)</label>
-            <input type="number" value={newProd.price} onChange={e=>setNewProd(p=>({...p,price:e.target.value}))} min="0" step="0.1" className={inp} {...fa} /></div>
-          <div><label className="text-xs font-bold text-sky-600 block mb-1">Stock</label>
-            <input type="number" value={newProd.stock} onChange={e=>setNewProd(p=>({...p,stock:e.target.value}))} min="0" className={inp} {...fa} /></div>
-        </div>
-        <div className="flex gap-2">
-          {["boisson","snack","autre"].map(c=>(
-            <button key={c} onClick={()=>setNewProd(p=>({...p,category:c}))}
-              className={"flex-1 py-2 rounded-xl text-xs font-bold " + (newProd.category===c?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
-              style={newProd.category===c?{background:BG}:{}}>{c}</button>
-          ))}
-        </div>
-        <button onClick={createProd} className="w-full py-2.5 rounded-xl font-bold text-white text-sm" style={{background:BG}}>Ajouter</button>
-      </div>
-    </Modal>
-  )}
+  , showAddProd && (
+    React.createElement(Modal, { title: "➕ Nouveau produit"  , onClose: ()=>setShowAddProd(false),}
+      , React.createElement('div', { className: "space-y-3",}
+        , React.createElement('div', { className: "flex gap-2" ,}
+          , React.createElement('input', { value: newProd.emoji, onChange: e=>setNewProd(p=>({...p,emoji:e.target.value})),
+            className: "bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-center text-2xl w-16 outline-none"         , ...fa,} )
+          , React.createElement('input', { value: newProd.name, onChange: e=>setNewProd(p=>({...p,name:e.target.value})),
+            placeholder: "Nom du produit"  , className: inp, ...fa,} )
+        )
+        , React.createElement('div', { className: "grid grid-cols-2 gap-2"  ,}
+          , React.createElement('div', null, React.createElement('label', { className: "text-xs font-bold text-sky-600 block mb-1"    ,}, "Prix (€)" )
+            , React.createElement('input', { type: "number", value: newProd.price, onChange: e=>setNewProd(p=>({...p,price:e.target.value})), min: "0", step: "0.1", className: inp, ...fa,} ))
+          , React.createElement('div', null, React.createElement('label', { className: "text-xs font-bold text-sky-600 block mb-1"    ,}, "Stock")
+            , React.createElement('input', { type: "number", value: newProd.stock, onChange: e=>setNewProd(p=>({...p,stock:e.target.value})), min: "0", className: inp, ...fa,} ))
+        )
+        , React.createElement('div', { className: "flex gap-2" ,}
+          , ["boisson","snack","autre"].map(c=>(
+            React.createElement('button', { key: c, onClick: ()=>setNewProd(p=>({...p,category:c})),
+              className: "flex-1 py-2 rounded-xl text-xs font-bold " + (newProd.category===c?"text-white":"bg-sky-50 text-sky-600 border border-sky-200"),
+              style: newProd.category===c?{background:BG}:{},}, c)
+          ))
+        )
+        , React.createElement('button', { onClick: createProd, className: "w-full py-2.5 rounded-xl font-bold text-white text-sm"     , style: {background:BG},}, "Ajouter")
+      )
+    )
+  )
 
-  {refundId && (
-    <Modal title="↩️ Confirmer remboursement" onClose={()=>setRefundId(null)}>
-      {(() => {
+  , refundId && (
+    React.createElement(Modal, { title: "↩️ Confirmer remboursement"  , onClose: ()=>setRefundId(null),}
+      , (() => {
         const sale=sales.find(s=>s.id===refundId);
         if (!sale) return null;
         return (
-          <div className="space-y-3">
-            <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-1">
-              <div className="text-xs text-slate-500">{new Date(sale.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</div>
-              <div className="text-xs text-slate-600 font-semibold">{sale.items?.map(i=>i.qty+"×"+i.name).join(", ")}</div>
-              <div className="text-sm font-black text-red-600">{sale.total.toFixed(2)}€ – {sale.method}</div>
-            </div>
-            <p className="text-xs text-slate-500">Stock recrédité. Solde membre remboursé si applicable.</p>
-            <div className="flex gap-2">
-              <button onClick={()=>setRefundId(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold">Annuler</button>
-              <button onClick={()=>processRefund(refundId)} className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold"
-                style={{background:"linear-gradient(135deg,#f87171,#dc2626)"}}>Confirmer</button>
-            </div>
-          </div>
+          React.createElement('div', { className: "space-y-3",}
+            , React.createElement('div', { className: "bg-red-50 border border-red-100 rounded-xl p-3 space-y-1"     ,}
+              , React.createElement('div', { className: "text-xs text-slate-500" ,}, new Date(sale.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}))
+              , React.createElement('div', { className: "text-xs text-slate-600 font-semibold"  ,}, _optionalChain([sale, 'access', _35 => _35.items, 'optionalAccess', _36 => _36.map, 'call', _37 => _37(i=>i.qty+"×"+i.name), 'access', _38 => _38.join, 'call', _39 => _39(", ")]))
+              , React.createElement('div', { className: "text-sm font-black text-red-600"  ,}, sale.total.toFixed(2), "€ – "  , sale.method)
+            )
+            , React.createElement('p', { className: "text-xs text-slate-500" ,}, "Stock recrédité. Solde membre remboursé si applicable."      )
+            , React.createElement('div', { className: "flex gap-2" ,}
+              , React.createElement('button', { onClick: ()=>setRefundId(null), className: "flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold"      ,}, "Annuler")
+              , React.createElement('button', { onClick: ()=>processRefund(refundId), className: "flex-1 py-2.5 rounded-xl text-white text-sm font-bold"     ,
+                style: {background:"linear-gradient(135deg,#f87171,#dc2626)"},}, "Confirmer")
+            )
+          )
         );
-      })()}
-    </Modal>
-  )}
+      })()
+    )
+  )
 
-  {/* HEADER */}
-  <header className="bg-white border-b border-sky-100 px-4 py-3 flex items-center justify-between shadow-sm">
-    <div className="flex items-center gap-3">
-      <img src={"data:image/png;base64,"+LOGO_B64} alt="logo" className="rounded-xl object-contain" style={{width:36,height:36}} />
-      <div>
-        <div className="text-base font-black text-sky-700 tracking-wide leading-tight">POPOTE B4</div>
-        <div className="flex items-center gap-1">
-          <div className="rounded-full" style={{width:6,height:6,background:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"}} />
-          <span className="text-xs font-semibold" style={{color:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"}}>
-            {syncStatus==="ok"?"Synchronisé":syncStatus==="error"?"Hors-ligne":"Connexion..."}
-          </span>
-        </div>
-      </div>
-    </div>
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style={{background:BG}}>
-          {dname.charAt(0).toUpperCase()}
-        </div>
-        <span className="hidden sm:block text-sm font-bold text-slate-700">{dname}</span>
-      </div>
-      <button onClick={()=>{setCurrentUser(null);setCart([]);setPayMode(null);}}
-        className="px-4 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-600 text-xs font-bold rounded-xl border border-sky-200">
-        Déconnexion
-      </button>
-    </div>
-  </header>
+  /* HEADER */
+  , React.createElement('header', { className: "bg-white border-b border-sky-100 px-4 py-3 flex items-center justify-between shadow-sm"        ,}
+    , React.createElement('div', { className: "flex items-center gap-3"  ,}
+      , React.createElement('img', { src: "data:image/png;base64,"+LOGO_B64, alt: "logo", className: "rounded-xl object-contain" , style: {width:36,height:36},} )
+      , React.createElement('div', null
+        , React.createElement('div', { className: "text-base font-black text-sky-700 tracking-wide leading-tight"    ,}, "POPOTE B4" )
+        , React.createElement('div', { className: "flex items-center gap-1"  ,}
+          , React.createElement('div', { className: "rounded-full", style: {width:6,height:6,background:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"},} )
+          , React.createElement('span', { className: "text-xs font-semibold" , style: {color:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"},}
+            , syncStatus==="ok"?"Synchronisé":syncStatus==="error"?"Hors-ligne":"Connexion..."
+          )
+        )
+      )
+    )
+    , React.createElement('div', { className: "flex items-center gap-3"  ,}
+      , React.createElement('div', { className: "flex items-center gap-2"  ,}
+        , React.createElement('div', { className: "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white"        , style: {background:BG},}
+          , dname.charAt(0).toUpperCase()
+        )
+        , React.createElement('span', { className: "hidden sm:block text-sm font-bold text-slate-700"    ,}, dname)
+      )
+      , React.createElement('button', { onClick: ()=>{setCurrentUser(null);setCart([]);setPayMode(null);},
+        className: "px-4 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-600 text-xs font-bold rounded-xl border border-sky-200"         ,}, "Déconnexion"
 
-  <nav className="bg-white border-b border-sky-100 flex px-1 overflow-x-auto shadow-sm">
-    {tabs.map(({id,lbl})=>(
-      <button key={id} onClick={()=>setTab(id)}
-        className={"px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all " + (tab===id?"border-sky-500 text-sky-600":"border-transparent text-slate-400 hover:text-sky-500")}>
-        {lbl}
-      </button>
-    ))}
-  </nav>
+      )
+    )
+  )
 
-  <main className="flex-1 overflow-auto">
+  , React.createElement('nav', { className: "bg-white border-b border-sky-100 flex px-1 overflow-x-auto shadow-sm"      ,}
+    , tabs.map(({id,lbl})=>(
+      React.createElement('button', { key: id, onClick: ()=>setTab(id),
+        className: "px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all " + (tab===id?"border-sky-500 text-sky-600":"border-transparent text-slate-400 hover:text-sky-500"),}
+        , lbl
+      )
+    ))
+  )
 
-    {/* CAISSE */}
-    {tab==="caisse" && (
-      <div className="flex flex-col lg:flex-row h-full">
-        <div className="flex-1 p-4">
-          <div className="flex gap-2 mb-4 flex-wrap">
-            {["tout","boisson","snack","autre"].map(c=>(
-              <button key={c} onClick={()=>setFilterCat(c)}
-                className={"px-4 py-1.5 rounded-full text-xs font-bold border transition-all " + (filterCat===c?"text-white border-transparent":"bg-white text-slate-500 border-sky-200")}
-                style={filterCat===c?{background:BG}:{}}>{c==="tout"?"Tout":c.charAt(0).toUpperCase()+c.slice(1)}</button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {filtProd.map(p=>(
-              <button key={p.id} onClick={()=>addToCart(p)}
-                className={"pcard bg-white border rounded-2xl p-3 text-left relative " + (p.stock===0?"opacity-40 cursor-not-allowed border-slate-200":"border-sky-100")}>
-                <div className="text-3xl mb-2">{p.emoji}</div>
-                <div className="text-xs font-bold text-slate-700 leading-tight">{p.name}</div>
-                <div className="font-black text-sky-600 text-sm mt-1">{p.price.toFixed(2)}€</div>
-                <div className={"absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full " + (p.stock<=3?"bg-red-100 text-red-600":"bg-sky-50 text-sky-400")}>
-                  {p.stock<=0?"rupt.":"×"+p.stock}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-sky-100 flex flex-col shadow-xl">
-          <div className="p-4 border-b border-sky-50 flex justify-between items-center">
-            <span className="text-sm font-black text-slate-700">🛒 Commande</span>
-            {cart.length>0&&<button onClick={clrCart} className="text-xs text-red-400 font-bold">Vider</button>}
-          </div>
-          <div className="flex-1 overflow-auto p-4 space-y-2">
-            {cart.length===0?<div className="text-slate-300 text-xs text-center py-8">Aucun article</div>
+  , React.createElement('main', { className: "flex-1 overflow-auto" ,}
+
+    /* CAISSE */
+    , tab==="caisse" && (
+      React.createElement('div', { className: "flex flex-col lg:flex-row h-full"   ,}
+        , React.createElement('div', { className: "flex-1 p-4" ,}
+          , React.createElement('div', { className: "flex gap-2 mb-4 flex-wrap"   ,}
+            , ["tout","boisson","snack","autre"].map(c=>(
+              React.createElement('button', { key: c, onClick: ()=>setFilterCat(c),
+                className: "px-4 py-1.5 rounded-full text-xs font-bold border transition-all " + (filterCat===c?"text-white border-transparent":"bg-white text-slate-500 border-sky-200"),
+                style: filterCat===c?{background:BG}:{},}, c==="tout"?"Tout":c.charAt(0).toUpperCase()+c.slice(1))
+            ))
+          )
+          , React.createElement('div', { className: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"    ,}
+            , filtProd.map(p=>(
+              React.createElement('button', { key: p.id, onClick: ()=>addToCart(p),
+                className: "pcard bg-white border rounded-2xl p-3 text-left relative " + (p.stock===0?"opacity-40 cursor-not-allowed border-slate-200":"border-sky-100"),}
+                , React.createElement('div', { className: "text-3xl mb-2" ,}, p.emoji)
+                , React.createElement('div', { className: "text-xs font-bold text-slate-700 leading-tight"   ,}, p.name)
+                , React.createElement('div', { className: "font-black text-sky-600 text-sm mt-1"   ,}, p.price.toFixed(2), "€")
+                , React.createElement('div', { className: "absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full " + (p.stock<=3?"bg-red-100 text-red-600":"bg-sky-50 text-sky-400"),}
+                  , p.stock<=0?"rupt.":"×"+p.stock
+                )
+              )
+            ))
+          )
+        )
+        , React.createElement('div', { className: "w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-sky-100 flex flex-col shadow-xl"         ,}
+          , React.createElement('div', { className: "p-4 border-b border-sky-50 flex justify-between items-center"     ,}
+            , React.createElement('span', { className: "text-sm font-black text-slate-700"  ,}, "🛒 Commande" )
+            , cart.length>0&&React.createElement('button', { onClick: clrCart, className: "text-xs text-red-400 font-bold"  ,}, "Vider")
+          )
+          , React.createElement('div', { className: "flex-1 overflow-auto p-4 space-y-2"   ,}
+            , cart.length===0?React.createElement('div', { className: "text-slate-300 text-xs text-center py-8"   ,}, "Aucun article" )
               :cart.map(item=>(
-                <div key={item.id} className="slide-in flex items-center gap-2 bg-sky-50 rounded-xl px-3 py-2 border border-sky-100">
-                  <span className="text-lg">{item.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-slate-700 truncate">{item.name}</div>
-                    <div className="text-sky-600 text-xs font-bold">{(item.price*item.qty).toFixed(2)}€</div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={()=>updQty(item.id,-1)} className="w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold">−</button>
-                    <span className="text-xs w-5 text-center font-bold">{item.qty}</span>
-                    <button onClick={()=>updQty(item.id,1)} className="w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold">+</button>
-                    <button onClick={()=>rmCart(item.id)} className="w-5 h-5 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1">×</button>
-                  </div>
-                </div>
-              ))}
-          </div>
-          <div className="p-4 border-t border-sky-50">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-slate-500 font-semibold text-sm">Total</span>
-              <span className="text-2xl font-black text-sky-600">{total.toFixed(2)}€</span>
-            </div>
-            {payMode===null&&cart.length>0&&(
-              <div className="space-y-2 slide-in">
-                <button onClick={payTPE} className={"w-full py-3 rounded-2xl font-black text-sm text-white "+(tpeStatus==="pending"?"opacity-70 cursor-wait":"")} style={{background:BG}}>
-                  {tpeStatus==="pending"?"⏳ Envoi...":"💳 TPE (SumUp)"}
-                </button>
-                <button onClick={payCash} className="w-full py-2 rounded-2xl font-bold text-sm bg-emerald-50 text-emerald-600 border border-emerald-200">💵 Espèces</button>
-                <button onClick={()=>setPayMode("member")} className="w-full py-2 rounded-2xl font-bold text-sm bg-sky-50 text-sky-600 border border-sky-200">👤 Compte membre</button>
-              </div>
-            )}
-            {payMode==="member"&&(
-              <div className="slide-in space-y-2">
-                <input value={memberSearch} onChange={e=>setMemberSearch(e.target.value)} placeholder="Rechercher..."
-                  className="w-full bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-xs outline-none" {...fa} />
-                <div className="max-h-40 overflow-auto space-y-1">
-                  {members.filter(m=>m.name.toLowerCase().includes(memberSearch.toLowerCase())).map(m=>(
-                    <button key={m.id} onClick={()=>setSelMember(m.id)}
-                      className={"w-full text-left px-3 py-2 rounded-xl text-xs font-semibold " + (selMember===m.id?"text-white":"bg-sky-50 text-slate-700 border border-sky-100")}
-                      style={selMember===m.id?{background:BG}:{}}>
-                      <div className="font-bold">{m.name}</div>
-                      <div className={selMember===m.id?"text-sky-100":m.balance<total?"text-red-500":"text-emerald-600"}>Solde: {m.balance.toFixed(2)}€</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={()=>{setPayMode(null);setSelMember(null);}} className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Annuler</button>
-                  <button onClick={payMember} disabled={!selMember} className="flex-1 py-2 rounded-xl text-white text-xs font-bold disabled:opacity-40" style={{background:BG}}>Valider</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )}
+                React.createElement('div', { key: item.id, className: "slide-in flex items-center gap-2 bg-sky-50 rounded-xl px-3 py-2 border border-sky-100"         ,}
+                  , React.createElement('span', { className: "text-lg",}, item.emoji)
+                  , React.createElement('div', { className: "flex-1 min-w-0" ,}
+                    , React.createElement('div', { className: "text-xs font-bold text-slate-700 truncate"   ,}, item.name)
+                    , React.createElement('div', { className: "text-sky-600 text-xs font-bold"  ,}, (item.price*item.qty).toFixed(2), "€")
+                  )
+                  , React.createElement('div', { className: "flex items-center gap-1"  ,}
+                    , React.createElement('button', { onClick: ()=>updQty(item.id,-1), className: "w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold"      ,}, "−")
+                    , React.createElement('span', { className: "text-xs w-5 text-center font-bold"   ,}, item.qty)
+                    , React.createElement('button', { onClick: ()=>updQty(item.id,1), className: "w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold"      ,}, "+")
+                    , React.createElement('button', { onClick: ()=>rmCart(item.id), className: "w-5 h-5 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1"       ,}, "×")
+                  )
+                )
+              ))
+          )
+          , React.createElement('div', { className: "p-4 border-t border-sky-50"  ,}
+            , React.createElement('div', { className: "flex justify-between items-center mb-4"   ,}
+              , React.createElement('span', { className: "text-slate-500 font-semibold text-sm"  ,}, "Total")
+              , React.createElement('span', { className: "text-2xl font-black text-sky-600"  ,}, total.toFixed(2), "€")
+            )
+            , payMode===null&&cart.length>0&&(
+              React.createElement('div', { className: "space-y-2 slide-in" ,}
+                , React.createElement('button', { onClick: payTPE, className: "w-full py-3 rounded-2xl font-black text-sm text-white "+(tpeStatus==="pending"?"opacity-70 cursor-wait":""), style: {background:BG},}
+                  , tpeStatus==="pending"?"⏳ Envoi...":"💳 TPE (SumUp)"
+                )
+                , React.createElement('button', { onClick: payCash, className: "w-full py-2 rounded-2xl font-bold text-sm bg-emerald-50 text-emerald-600 border border-emerald-200"        ,}, "💵 Espèces" )
+                , React.createElement('button', { onClick: ()=>setPayMode("member"), className: "w-full py-2 rounded-2xl font-bold text-sm bg-sky-50 text-sky-600 border border-sky-200"        ,}, "👤 Compte membre"  )
+              )
+            )
+            , payMode==="member"&&(
+              React.createElement('div', { className: "slide-in space-y-2" ,}
+                , React.createElement('input', { value: memberSearch, onChange: e=>setMemberSearch(e.target.value), placeholder: "Rechercher...",
+                  className: "w-full bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-xs outline-none"        , ...fa,} )
+                , React.createElement('div', { className: "max-h-40 overflow-auto space-y-1"  ,}
+                  , members.filter(m=>m.name.toLowerCase().includes(memberSearch.toLowerCase())).map(m=>(
+                    React.createElement('button', { key: m.id, onClick: ()=>setSelMember(m.id),
+                      className: "w-full text-left px-3 py-2 rounded-xl text-xs font-semibold " + (selMember===m.id?"text-white":"bg-sky-50 text-slate-700 border border-sky-100"),
+                      style: selMember===m.id?{background:BG}:{},}
+                      , React.createElement('div', { className: "font-bold",}, m.name)
+                      , React.createElement('div', { className: selMember===m.id?"text-sky-100":m.balance<total?"text-red-500":"text-emerald-600",}, "Solde: " , m.balance.toFixed(2), "€")
+                    )
+                  ))
+                )
+                , React.createElement('div', { className: "flex gap-2" ,}
+                  , React.createElement('button', { onClick: ()=>{setPayMode(null);setSelMember(null);}, className: "flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold"      ,}, "Annuler")
+                  , React.createElement('button', { onClick: payMember, disabled: !selMember, className: "flex-1 py-2 rounded-xl text-white text-xs font-bold disabled:opacity-40"      , style: {background:BG},}, "Valider")
+                )
+              )
+            )
+          )
+        )
+      )
+    )
 
-    {/* STOCK */}
-    {tab==="stock"&&(
-      <div className="p-4 space-y-3 max-w-2xl mx-auto">
-        <h2 className="text-base font-black text-sky-700 mb-4">Gestion du stock</h2>
-        {products.map(p=>(
-          <div key={p.id} className="bg-white border border-sky-100 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-            <span className="text-2xl">{p.emoji}</span>
-            <div className="flex-1"><div className="font-bold text-sm text-slate-700">{p.name}</div><div className="text-xs text-slate-400">{p.price.toFixed(2)}€ · {p.category}</div></div>
-            {isAdmin?(
-              <div className="flex items-center gap-2">
-                <button onClick={()=>updStock(p.id,Math.max(0,p.stock-1))} className="w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black">−</button>
-                <span className={"w-10 text-center font-black text-sm "+(p.stock<=3?"text-red-500":"text-slate-700")}>{p.stock}</span>
-                <button onClick={()=>updStock(p.id,p.stock+1)} className="w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black">+</button>
-                <input type="number" placeholder="=" min="0" className="w-14 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none" {...fa}
-                  onKeyDown={e=>{if(e.key==="Enter"){const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){updStock(p.id,v);e.target.value="";}}}} />
-              </div>
-            ):<span className={"font-bold text-sm "+(p.stock<=3?"text-red-500":"text-slate-400")}>{p.stock} unités</span>}
-            {p.stock<=3&&p.stock>0&&<Badge color="orange">⚠ Bas</Badge>}
-            {p.stock===0&&<Badge color="red">Rupture</Badge>}
-          </div>
-        ))}
-      </div>
-    )}
+    /* STOCK */
+    , tab==="stock"&&(
+      React.createElement('div', { className: "p-4 space-y-3 max-w-2xl mx-auto"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700 mb-4"   ,}, "Gestion du stock"  )
+        , products.map(p=>(
+          React.createElement('div', { key: p.id, className: "bg-white border border-sky-100 rounded-2xl p-4 flex items-center gap-4 shadow-sm"        ,}
+            , React.createElement('span', { className: "text-2xl",}, p.emoji)
+            , React.createElement('div', { className: "flex-1",}, React.createElement('div', { className: "font-bold text-sm text-slate-700"  ,}, p.name), React.createElement('div', { className: "text-xs text-slate-400" ,}, p.price.toFixed(2), "€ · "  , p.category))
+            , isAdmin?(
+              React.createElement('div', { className: "flex items-center gap-2"  ,}
+                , React.createElement('button', { onClick: ()=>updStock(p.id,Math.max(0,p.stock-1)), className: "w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black"      ,}, "−")
+                , React.createElement('span', { className: "w-10 text-center font-black text-sm "+(p.stock<=3?"text-red-500":"text-slate-700"),}, p.stock)
+                , React.createElement('button', { onClick: ()=>updStock(p.id,p.stock+1), className: "w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black"      ,}, "+")
+                , React.createElement('input', { type: "number", placeholder: "=", min: "0", className: "w-14 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none"         , ...fa,
+                  onKeyDown: e=>{if(e.key==="Enter"){const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){updStock(p.id,v);e.target.value="";}}},} )
+              )
+            ):React.createElement('span', { className: "font-bold text-sm "+(p.stock<=3?"text-red-500":"text-slate-400"),}, p.stock, " unités" )
+            , p.stock<=3&&p.stock>0&&React.createElement(Badge, { color: "orange",}, "⚠ Bas" )
+            , p.stock===0&&React.createElement(Badge, { color: "red",}, "Rupture")
+          )
+        ))
+      )
+    )
 
-    {/* MEMBRES */}
-    {tab==="membres"&&(
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-base font-black text-sky-700">Comptes membres</h2>
-        <div className="flex gap-2">
-          <input value={newMemberName} onChange={e=>setNewMemberName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addMember()}
-            placeholder="Nouveau membre..." className="flex-1 bg-white border border-sky-200 rounded-xl px-3 py-2 text-sm outline-none" {...fa} />
-          <button onClick={addMember} className="px-4 py-2 text-white font-bold rounded-xl text-sm" style={{background:BG}}>+ Ajouter</button>
-        </div>
-        {members.map(m=>(
-          <div key={m.id} className="bg-white border border-sky-100 rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-white text-sm" style={{background:BG}}>{m.name.charAt(0)}</div>
-              <div className="flex-1"><div className="font-bold text-sm">{m.name}</div><div className={"text-sm font-black "+(m.balance>0?"text-emerald-600":"text-red-500")}>{m.balance.toFixed(2)}€</div></div>
-              <button onClick={()=>setRechargeId(rechargeId===m.id?null:m.id)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200">+ Recharger</button>
-            </div>
-            {rechargeId===m.id&&(
-              <div className="slide-in px-4 pb-4 flex gap-2 flex-wrap border-t border-sky-50 pt-3">
-                {[5,10,20,50].map(a=><button key={a} onClick={()=>recharge(m.id,a)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200">+{a}€</button>)}
-                <input type="number" value={rechargeAmt} onChange={e=>setRechargeAmt(e.target.value)} placeholder="Montant" className="w-24 bg-sky-50 border border-sky-200 rounded-xl px-2 text-xs outline-none" {...fa} />
-                <button onClick={()=>recharge(m.id,rechargeAmt)} className="px-3 py-1.5 text-white text-xs font-bold rounded-xl" style={{background:BG}}>OK</button>
-              </div>
-            )}
-            {(m.transactions||[]).length>0&&(
-              <div className="border-t border-sky-50 px-4 py-2 max-h-32 overflow-auto">
-                {[...(m.transactions||[])].reverse().slice(0,5).map((t,i)=>(
-                  <div key={i} className="flex justify-between items-center py-1 text-xs border-b border-sky-50 last:border-0">
-                    <span className="text-slate-400 truncate max-w-[60%]">{t.label}</span>
-                    <span className={"font-bold "+(t.amount<0?"text-red-500":"text-emerald-600")}>{t.amount>0?"+":""}{t.amount.toFixed(2)}€</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
+    /* MEMBRES */
+    , tab==="membres"&&(
+      React.createElement('div', { className: "p-4 max-w-2xl mx-auto space-y-4"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700"  ,}, "Comptes membres" )
+        , React.createElement('div', { className: "flex gap-2" ,}
+          , React.createElement('input', { value: newMemberName, onChange: e=>setNewMemberName(e.target.value), onKeyDown: e=>e.key==="Enter"&&addMember(),
+            placeholder: "Nouveau membre..." , className: "flex-1 bg-white border border-sky-200 rounded-xl px-3 py-2 text-sm outline-none"        , ...fa,} )
+          , React.createElement('button', { onClick: addMember, className: "px-4 py-2 text-white font-bold rounded-xl text-sm"     , style: {background:BG},}, "+ Ajouter" )
+        )
+        , members.map(m=>(
+          React.createElement('div', { key: m.id, className: "bg-white border border-sky-100 rounded-2xl overflow-hidden shadow-sm"     ,}
+            , React.createElement('div', { className: "p-4 flex items-center gap-3"   ,}
+              , React.createElement('div', { className: "w-10 h-10 rounded-full flex items-center justify-center font-black text-white text-sm"        , style: {background:BG},}, m.name.charAt(0))
+              , React.createElement('div', { className: "flex-1",}, React.createElement('div', { className: "font-bold text-sm" ,}, m.name), React.createElement('div', { className: "text-sm font-black "+(m.balance>0?"text-emerald-600":"text-red-500"),}, m.balance.toFixed(2), "€"))
+              , React.createElement('button', { onClick: ()=>setRechargeId(rechargeId===m.id?null:m.id), className: "px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200"        ,}, "+ Recharger" )
+            )
+            , rechargeId===m.id&&(
+              React.createElement('div', { className: "slide-in px-4 pb-4 flex gap-2 flex-wrap border-t border-sky-50 pt-3"        ,}
+                , [5,10,20,50].map(a=>React.createElement('button', { key: a, onClick: ()=>recharge(m.id,a), className: "px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200"        ,}, "+", a, "€"))
+                , React.createElement('input', { type: "number", value: rechargeAmt, onChange: e=>setRechargeAmt(e.target.value), placeholder: "Montant", className: "w-24 bg-sky-50 border border-sky-200 rounded-xl px-2 text-xs outline-none"       , ...fa,} )
+                , React.createElement('button', { onClick: ()=>recharge(m.id,rechargeAmt), className: "px-3 py-1.5 text-white text-xs font-bold rounded-xl"     , style: {background:BG},}, "OK")
+              )
+            )
+            , (m.transactions||[]).length>0&&(
+              React.createElement('div', { className: "border-t border-sky-50 px-4 py-2 max-h-32 overflow-auto"     ,}
+                , [...(m.transactions||[])].reverse().slice(0,5).map((t,i)=>(
+                  React.createElement('div', { key: i, className: "flex justify-between items-center py-1 text-xs border-b border-sky-50 last:border-0"       ,}
+                    , React.createElement('span', { className: "text-slate-400 truncate max-w-[60%]"  ,}, t.label)
+                    , React.createElement('span', { className: "font-bold "+(t.amount<0?"text-red-500":"text-emerald-600"),}, t.amount>0?"+":"", t.amount.toFixed(2), "€")
+                  )
+                ))
+              )
+            )
+          )
+        ))
+      )
+    )
 
-    {/* STATS */}
-    {tab==="stats"&&(
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-base font-black text-sky-700">Statistiques</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"><div className="text-xs text-slate-400 mb-1">CA Total</div><div className="text-2xl font-black text-sky-600">{totalCA.toFixed(2)}€</div></div>
-          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"><div className="text-xs text-slate-400 mb-1">Ventes</div><div className="text-2xl font-black text-slate-700">{sales.length}</div></div>
-        </div>
-        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm">
-          <div className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Top produits</div>
-          {topProds.map((p,i)=>(
-            <div key={p.id} className="flex items-center gap-3 py-2 border-b border-sky-50 last:border-0">
-              <span className="text-slate-400 text-xs w-4">{i+1}</span><span className="text-xl">{p.emoji}</span>
-              <span className="flex-1 text-sm text-slate-700 font-semibold">{p.name}</span>
-              <span className="text-xs text-slate-400">{p.sold} vendus</span>
-              <span className="text-xs text-sky-600 font-black">{(p.sold*p.price).toFixed(2)}€</span>
-            </div>
-          ))}
-        </div>
-        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm">
-          <div className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Dernières ventes</div>
-          {sales.slice(0,10).map(s=>(
-            <div key={s.id} className="py-2 border-b border-sky-50 last:border-0">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">{new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</span>
-                <span className={"font-black "+(s.refunded?"text-slate-400 line-through":"text-sky-600")}>{s.total.toFixed(2)}€{s.refunded?" ↩️":""}</span>
-              </div>
-              <div className="text-xs text-slate-400 mt-0.5">{s.items?.map(i=>i.qty+"×"+i.name).join(", ")} · {s.method} · {s.operator}</div>
-            </div>
-          ))}
-          {sales.length===0&&<div className="text-xs text-slate-300 text-center py-4">Aucune vente</div>}
-        </div>
-      </div>
-    )}
+    /* STATS */
+    , tab==="stats"&&(
+      React.createElement('div', { className: "p-4 max-w-2xl mx-auto space-y-4"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700"  ,}, "Statistiques")
+        , React.createElement('div', { className: "grid grid-cols-2 gap-3"  ,}
+          , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"     ,}, React.createElement('div', { className: "text-xs text-slate-400 mb-1"  ,}, "CA Total" ), React.createElement('div', { className: "text-2xl font-black text-sky-600"  ,}, totalCA.toFixed(2), "€"))
+          , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"     ,}, React.createElement('div', { className: "text-xs text-slate-400 mb-1"  ,}, "Ventes"), React.createElement('div', { className: "text-2xl font-black text-slate-700"  ,}, sales.length))
+        )
+        , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"     ,}
+          , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest mb-3"     ,}, "Top produits" )
+          , topProds.map((p,i)=>(
+            React.createElement('div', { key: p.id, className: "flex items-center gap-3 py-2 border-b border-sky-50 last:border-0"      ,}
+              , React.createElement('span', { className: "text-slate-400 text-xs w-4"  ,}, i+1), React.createElement('span', { className: "text-xl",}, p.emoji)
+              , React.createElement('span', { className: "flex-1 text-sm text-slate-700 font-semibold"   ,}, p.name)
+              , React.createElement('span', { className: "text-xs text-slate-400" ,}, p.sold, " vendus" )
+              , React.createElement('span', { className: "text-xs text-sky-600 font-black"  ,}, (p.sold*p.price).toFixed(2), "€")
+            )
+          ))
+        )
+        , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"     ,}
+          , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest mb-3"     ,}, "Dernières ventes" )
+          , sales.slice(0,10).map(s=>(
+            React.createElement('div', { key: s.id, className: "py-2 border-b border-sky-50 last:border-0"   ,}
+              , React.createElement('div', { className: "flex justify-between text-xs"  ,}
+                , React.createElement('span', { className: "text-slate-400",}, new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}))
+                , React.createElement('span', { className: "font-black "+(s.refunded?"text-slate-400 line-through":"text-sky-600"),}, s.total.toFixed(2), "€", s.refunded?" ↩️":"")
+              )
+              , React.createElement('div', { className: "text-xs text-slate-400 mt-0.5"  ,}, _optionalChain([s, 'access', _40 => _40.items, 'optionalAccess', _41 => _41.map, 'call', _42 => _42(i=>i.qty+"×"+i.name), 'access', _43 => _43.join, 'call', _44 => _44(", ")]), " · "  , s.method, " · "  , s.operator)
+            )
+          ))
+          , sales.length===0&&React.createElement('div', { className: "text-xs text-slate-300 text-center py-4"   ,}, "Aucune vente" )
+        )
+      )
+    )
 
-    {/* VENDEURS */}
-    {tab==="vendeurs"&&isAdmin&&(
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-base font-black text-sky-700">🏆 Classement des vendeurs</h2>
-        {vendors.length===0?<div className="bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"><div className="text-4xl mb-2">📭</div><div className="text-sm text-slate-400">Aucune vente</div></div>
+    /* VENDEURS */
+    , tab==="vendeurs"&&isAdmin&&(
+      React.createElement('div', { className: "p-4 max-w-2xl mx-auto space-y-4"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700"  ,}, "🏆 Classement des vendeurs"   )
+        , vendors.length===0?React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"      ,}, React.createElement('div', { className: "text-4xl mb-2" ,}, "📭"), React.createElement('div', { className: "text-sm text-slate-400" ,}, "Aucune vente" ))
         :vendors.map((v,i)=>(
-          <div key={v.name} className={"bg-white border rounded-2xl overflow-hidden shadow-sm "+(i===0?"border-amber-200":i===1?"border-slate-200":i===2?"border-orange-200":"border-sky-100")}>
-            <div className="p-4 flex items-center gap-4">
-              <div className={"w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 "+(i===0?"bg-amber-50":i===1?"bg-slate-100":i===2?"bg-orange-50":"bg-sky-50")}>
-                {i<3?medals[i]:<span className="text-slate-400 text-sm font-black">#{i+1}</span>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-black text-slate-700 text-sm">{v.name}</div>
-                <div className="text-xs text-slate-400">{v.n} vente{v.n>1?"s":""} · Moy. {(v.ca/v.n).toFixed(2)}€</div>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className={"text-xl font-black "+(i===0?"text-amber-500":i===1?"text-slate-500":i===2?"text-orange-500":"text-sky-600")}>{v.ca.toFixed(2)}€</div>
-                <div className="text-xs text-slate-400">CA total</div>
-              </div>
-            </div>
-            {vendors[0]?.ca>0&&<div className="px-4 pb-3"><div className="h-1.5 bg-sky-50 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{width:(v.ca/vendors[0].ca*100)+"%",background:i===0?"linear-gradient(90deg,#fbbf24,#f59e0b)":i===1?"linear-gradient(90deg,#94a3b8,#64748b)":i===2?"linear-gradient(90deg,#fb923c,#ea580c)":BG}} /></div></div>}
-          </div>
-        ))}
-      </div>
-    )}
+          React.createElement('div', { key: v.name, className: "bg-white border rounded-2xl overflow-hidden shadow-sm "+(i===0?"border-amber-200":i===1?"border-slate-200":i===2?"border-orange-200":"border-sky-100"),}
+            , React.createElement('div', { className: "p-4 flex items-center gap-4"   ,}
+              , React.createElement('div', { className: "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 "+(i===0?"bg-amber-50":i===1?"bg-slate-100":i===2?"bg-orange-50":"bg-sky-50"),}
+                , i<3?medals[i]:React.createElement('span', { className: "text-slate-400 text-sm font-black"  ,}, "#", i+1)
+              )
+              , React.createElement('div', { className: "flex-1 min-w-0" ,}
+                , React.createElement('div', { className: "font-black text-slate-700 text-sm"  ,}, v.name)
+                , React.createElement('div', { className: "text-xs text-slate-400" ,}, v.n, " vente" , v.n>1?"s":"", " · Moy. "   , (v.ca/v.n).toFixed(2), "€")
+              )
+              , React.createElement('div', { className: "text-right flex-shrink-0" ,}
+                , React.createElement('div', { className: "text-xl font-black "+(i===0?"text-amber-500":i===1?"text-slate-500":i===2?"text-orange-500":"text-sky-600"),}, v.ca.toFixed(2), "€")
+                , React.createElement('div', { className: "text-xs text-slate-400" ,}, "CA total" )
+              )
+            )
+            , _optionalChain([vendors, 'access', _45 => _45[0], 'optionalAccess', _46 => _46.ca])>0&&React.createElement('div', { className: "px-4 pb-3" ,}, React.createElement('div', { className: "h-1.5 bg-sky-50 rounded-full overflow-hidden"   ,}, React.createElement('div', { className: "h-full rounded-full" , style: {width:(v.ca/vendors[0].ca*100)+"%",background:i===0?"linear-gradient(90deg,#fbbf24,#f59e0b)":i===1?"linear-gradient(90deg,#94a3b8,#64748b)":i===2?"linear-gradient(90deg,#fb923c,#ea580c)":BG},} )))
+          )
+        ))
+      )
+    )
 
-    {/* REMBOURSEMENTS */}
-    {tab==="remboursement"&&isAdmin&&(
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-base font-black text-sky-700">↩️ Remboursements</h2>
-        {sales.length===0?<div className="bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"><div className="text-4xl mb-2">📭</div><div className="text-sm text-slate-400">Aucune vente</div></div>
+    /* REMBOURSEMENTS */
+    , tab==="remboursement"&&isAdmin&&(
+      React.createElement('div', { className: "p-4 max-w-2xl mx-auto space-y-4"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700"  ,}, "↩️ Remboursements" )
+        , sales.length===0?React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"      ,}, React.createElement('div', { className: "text-4xl mb-2" ,}, "📭"), React.createElement('div', { className: "text-sm text-slate-400" ,}, "Aucune vente" ))
         :sales.map(s=>(
-          <div key={s.id} className={"bg-white border rounded-2xl p-4 shadow-sm "+(s.refunded?"border-slate-200 opacity-60":"border-sky-100")}>
-            <div className="flex items-start gap-3">
-              <div className={"w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 "+(s.refunded?"bg-slate-100":"bg-red-50")}>{s.refunded?"✅":"🧾"}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-400">{new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</span>
-                  <span className={"text-sm font-black "+(s.refunded?"text-slate-400":"text-sky-600")}>{s.total.toFixed(2)}€</span>
-                </div>
-                <div className="text-xs text-slate-600 font-semibold mt-0.5 truncate">{s.items?.map(i=>i.qty+"×"+i.name).join(", ")}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{s.method} · {s.operator}</div>
-                {s.refunded&&s.refundDate&&<div className="text-xs text-emerald-600 font-bold mt-1">✅ Remboursé le {new Date(s.refundDate).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})} par {s.refundedBy}</div>}
-              </div>
-              {!s.refunded&&<button onClick={()=>setRefundId(s.id)} className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200">Rembourser</button>}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+          React.createElement('div', { key: s.id, className: "bg-white border rounded-2xl p-4 shadow-sm "+(s.refunded?"border-slate-200 opacity-60":"border-sky-100"),}
+            , React.createElement('div', { className: "flex items-start gap-3"  ,}
+              , React.createElement('div', { className: "w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 "+(s.refunded?"bg-slate-100":"bg-red-50"),}, s.refunded?"✅":"🧾")
+              , React.createElement('div', { className: "flex-1 min-w-0" ,}
+                , React.createElement('div', { className: "flex justify-between items-center"  ,}
+                  , React.createElement('span', { className: "text-xs text-slate-400" ,}, new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}))
+                  , React.createElement('span', { className: "text-sm font-black "+(s.refunded?"text-slate-400":"text-sky-600"),}, s.total.toFixed(2), "€")
+                )
+                , React.createElement('div', { className: "text-xs text-slate-600 font-semibold mt-0.5 truncate"    ,}, _optionalChain([s, 'access', _47 => _47.items, 'optionalAccess', _48 => _48.map, 'call', _49 => _49(i=>i.qty+"×"+i.name), 'access', _50 => _50.join, 'call', _51 => _51(", ")]))
+                , React.createElement('div', { className: "text-xs text-slate-400 mt-0.5"  ,}, s.method, " · "  , s.operator)
+                , s.refunded&&s.refundDate&&React.createElement('div', { className: "text-xs text-emerald-600 font-bold mt-1"   ,}, "✅ Remboursé le "   , new Date(s.refundDate).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}), " par "  , s.refundedBy)
+              )
+              , !s.refunded&&React.createElement('button', { onClick: ()=>setRefundId(s.id), className: "flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200"         ,}, "Rembourser")
+            )
+          )
+        ))
+      )
+    )
 
-    {/* SETTINGS */}
-    {tab==="settings"&&(
-      <div className="p-4 max-w-2xl mx-auto space-y-4">
-        <h2 className="text-base font-black text-sky-700">Configuration</h2>
+    /* SETTINGS */
+    , tab==="settings"&&(
+      React.createElement('div', { className: "p-4 max-w-2xl mx-auto space-y-4"   ,}
+        , React.createElement('h2', { className: "text-base font-black text-sky-700"  ,}, "Configuration")
 
-        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Produits & Prix</div>
-            {isAdmin?<button onClick={()=>setShowAddProd(true)} className="px-3 py-1 text-white text-xs font-bold rounded-xl" style={{background:BG}}>+ Nouveau</button>:<Badge color="gray">🔒 Admin requis</Badge>}
-          </div>
-          {products.map(p=>(
-            <div key={p.id} className="flex items-center gap-2">
-              <span className="text-xl">{p.emoji}</span>
-              <span className="flex-1 text-sm text-slate-700 font-semibold truncate">{p.name}</span>
-              {isAdmin?(
-                <div className="flex items-center gap-1">
-                  <input type="number" defaultValue={p.price} step="0.1" min="0"
-                    className="w-20 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none" {...fa}
-                    onBlur={e=>{const v=parseFloat(e.target.value);if(!isNaN(v)&&v>0)updPrice(p.id,v);}} />
-                  <span className="text-xs text-slate-400">€</span>
-                  <button onClick={()=>deleteProd(p.id)} className="w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1">×</button>
-                </div>
-              ):<span className="text-sm text-slate-400 font-bold">{p.price.toFixed(2)}€</span>}
-            </div>
-          ))}
-        </div>
+        , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3"      ,}
+          , React.createElement('div', { className: "flex items-center justify-between mb-1"   ,}
+            , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest"    ,}, "Produits & Prix"  )
+            , isAdmin?React.createElement('button', { onClick: ()=>setShowAddProd(true), className: "px-3 py-1 text-white text-xs font-bold rounded-xl"     , style: {background:BG},}, "+ Nouveau" ):React.createElement(Badge, { color: "gray",}, "🔒 Admin requis"  )
+          )
+          , products.map(p=>(
+            React.createElement('div', { key: p.id, className: "flex items-center gap-2"  ,}
+              , React.createElement('span', { className: "text-xl",}, p.emoji)
+              , React.createElement('span', { className: "flex-1 text-sm text-slate-700 font-semibold truncate"    ,}, p.name)
+              , isAdmin?(
+                React.createElement('div', { className: "flex items-center gap-1"  ,}
+                  , React.createElement('input', { type: "number", defaultValue: p.price, step: "0.1", min: "0",
+                    className: "w-20 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none"         , ...fa,
+                    onBlur: e=>{const v=parseFloat(e.target.value);if(!isNaN(v)&&v>0)updPrice(p.id,v);},} )
+                  , React.createElement('span', { className: "text-xs text-slate-400" ,}, "€")
+                  , React.createElement('button', { onClick: ()=>deleteProd(p.id), className: "w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1"       ,}, "×")
+                )
+              ):React.createElement('span', { className: "text-sm text-slate-400 font-bold"  ,}, p.price.toFixed(2), "€")
+            )
+          ))
+        )
 
-        {isAdmin&&(
-          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3">
-            <div className="text-xs font-black text-sky-600 uppercase tracking-widest">📧 Récap par email</div>
-            <input type="email" value={recapEmail} onChange={e=>setRecapEmail(e.target.value)} placeholder="exemple@email.com" className={inp} {...fa} />
-            <div className="flex gap-2">
-              {[{v:"today",l:"Aujourd'hui"},{v:"week",l:"7 jours"},{v:"all",l:"Tout"}].map(p=>(
-                <button key={p.v} onClick={()=>setRecapPeriod(p.v)}
-                  className={"flex-1 py-2 rounded-xl text-xs font-bold "+(recapPeriod===p.v?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
-                  style={recapPeriod===p.v?{background:BG}:{}}>{p.l}</button>
-              ))}
-            </div>
-            {(()=>{
+        , isAdmin&&(
+          React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3"      ,}
+            , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest"    ,}, "📧 Récap par email"   )
+            , React.createElement('input', { type: "email", value: recapEmail, onChange: e=>setRecapEmail(e.target.value), placeholder: "exemple@email.com", className: inp, ...fa,} )
+            , React.createElement('div', { className: "flex gap-2" ,}
+              , [{v:"today",l:"Aujourd'hui"},{v:"week",l:"7 jours"},{v:"all",l:"Tout"}].map(p=>(
+                React.createElement('button', { key: p.v, onClick: ()=>setRecapPeriod(p.v),
+                  className: "flex-1 py-2 rounded-xl text-xs font-bold "+(recapPeriod===p.v?"text-white":"bg-sky-50 text-sky-600 border border-sky-200"),
+                  style: recapPeriod===p.v?{background:BG}:{},}, p.l)
+              ))
+            )
+            , (()=>{
               const now=new Date();
               const f=sales.filter(s=>{if(recapPeriod==="all")return true;const d=new Date(s.date);if(recapPeriod==="today")return d.toDateString()===now.toDateString();const w=new Date(now);w.setDate(now.getDate()-7);return d>=w;});
               return(
-                <div className="bg-sky-50 rounded-xl p-3 flex items-center justify-between border border-sky-100">
-                  <div><div className="text-xs font-bold text-slate-600">{f.length} vente{f.length>1?"s":""}</div><div className="text-xs text-sky-600 font-black">{f.reduce((s,v)=>s+v.total,0).toFixed(2)}€</div></div>
-                  <button onClick={sendRecap} className="px-4 py-2 text-white text-xs font-bold rounded-xl" style={{background:BG}}>Envoyer 📤</button>
-                </div>
+                React.createElement('div', { className: "bg-sky-50 rounded-xl p-3 flex items-center justify-between border border-sky-100"       ,}
+                  , React.createElement('div', null, React.createElement('div', { className: "text-xs font-bold text-slate-600"  ,}, f.length, " vente" , f.length>1?"s":""), React.createElement('div', { className: "text-xs text-sky-600 font-black"  ,}, f.reduce((s,v)=>s+v.total,0).toFixed(2), "€"))
+                  , React.createElement('button', { onClick: sendRecap, className: "px-4 py-2 text-white text-xs font-bold rounded-xl"     , style: {background:BG},}, "Envoyer 📤" )
+                )
               );
-            })()}
-          </div>
-        )}
+            })()
+          )
+        )
 
-        {isAdmin&&(
-          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Comptes utilisateurs</div>
-              <button onClick={()=>setShowAddUser(p=>!p)} className="text-xs text-sky-500 font-bold">{showAddUser?"▲ Masquer":"▼ Ajouter"}</button>
-            </div>
-            <div className="space-y-2">
-              {visUsers.map(u=>(
-                <div key={u.id} className="bg-sky-50 rounded-xl px-3 py-2 flex items-center gap-3 border border-sky-100">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0" style={{background:BG}}>{(u.display_name||"?").charAt(0)}</div>
-                  <div className="flex-1 min-w-0"><div className="text-xs font-bold text-slate-700">{u.display_name}</div><div className="text-xs text-slate-400">@{u.username}</div></div>
-                  {currentUser.id!==u.id&&(u.role!=="seigneur"||isSeigneur)&&(
-                    <button onClick={()=>flipRole(u.id)} className="px-2 py-1 rounded-lg bg-white text-sky-600 text-xs font-bold border border-sky-200">{u.role==="admin"?"Admin":"User"}</button>
-                  )}
-                  <button onClick={()=>setEditPwd({uid:u.id,newPwd:""})} className="px-2 py-1 rounded-lg bg-white text-slate-400 text-xs font-bold border border-slate-200">🔑</button>
-                  {currentUser.id!==u.id&&<button onClick={()=>removeUser(u.id)} className="w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold">×</button>}
-                </div>
-              ))}
-            </div>
-            {showAddUser&&(
-              <div className="slide-in border-t border-sky-100 pt-4 space-y-3">
-                <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Nouvel utilisateur</div>
-                <input value={newUser.display_name} onChange={e=>setNewUser(p=>({...p,display_name:e.target.value}))} placeholder="Nom affiché" className={inp} {...fa} />
-                <div className="grid grid-cols-2 gap-2">
-                  <input value={newUser.username} onChange={e=>setNewUser(p=>({...p,username:e.target.value}))} placeholder="Identifiant" className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none" {...fa} />
-                  <input value={newUser.password} onChange={e=>setNewUser(p=>({...p,password:e.target.value}))} placeholder="Mot de passe" className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none" {...fa} />
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-slate-500">Rôle :</span>
-                  {(isSeigneur?["user","admin","seigneur"]:["user","admin"]).map(r=>(
-                    <button key={r} onClick={()=>setNewUser(p=>({...p,role:r}))}
-                      className={"px-3 py-1.5 rounded-xl text-xs font-bold "+(newUser.role===r?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
-                      style={newUser.role===r?{background:BG}:{}}>{r==="user"?"Utilisateur":r==="admin"?"Admin":"Seigneur"}</button>
-                  ))}
-                  <button onClick={createUser} className="ml-auto px-4 py-1.5 text-white text-xs font-bold rounded-xl" style={{background:"linear-gradient(135deg,#34d399,#059669)"}}>Créer</button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        , isAdmin&&(
+          React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-4"      ,}
+            , React.createElement('div', { className: "flex items-center justify-between"  ,}
+              , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest"    ,}, "Comptes utilisateurs" )
+              , React.createElement('button', { onClick: ()=>setShowAddUser(p=>!p), className: "text-xs text-sky-500 font-bold"  ,}, showAddUser?"▲ Masquer":"▼ Ajouter")
+            )
+            , React.createElement('div', { className: "space-y-2",}
+              , visUsers.map(u=>(
+                React.createElement('div', { key: u.id, className: "bg-sky-50 rounded-xl px-3 py-2 flex items-center gap-3 border border-sky-100"        ,}
+                  , React.createElement('div', { className: "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0"         , style: {background:BG},}, (u.display_name||"?").charAt(0))
+                  , React.createElement('div', { className: "flex-1 min-w-0" ,}, React.createElement('div', { className: "text-xs font-bold text-slate-700"  ,}, u.display_name), React.createElement('div', { className: "text-xs text-slate-400" ,}, "@", u.username))
+                  , currentUser.id!==u.id&&(u.role!=="seigneur"||isSeigneur)&&(
+                    React.createElement('button', { onClick: ()=>flipRole(u.id), className: "px-2 py-1 rounded-lg bg-white text-sky-600 text-xs font-bold border border-sky-200"        ,}, u.role==="admin"?"Admin":"User")
+                  )
+                  , React.createElement('button', { onClick: ()=>setEditPwd({uid:u.id,newPwd:""}), className: "px-2 py-1 rounded-lg bg-white text-slate-400 text-xs font-bold border border-slate-200"        ,}, "🔑")
+                  , currentUser.id!==u.id&&React.createElement('button', { onClick: ()=>removeUser(u.id), className: "w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold"      ,}, "×")
+                )
+              ))
+            )
+            , showAddUser&&(
+              React.createElement('div', { className: "slide-in border-t border-sky-100 pt-4 space-y-3"    ,}
+                , React.createElement('div', { className: "text-xs font-black text-sky-600 uppercase tracking-widest"    ,}, "Nouvel utilisateur" )
+                , React.createElement('input', { value: newUser.display_name, onChange: e=>setNewUser(p=>({...p,display_name:e.target.value})), placeholder: "Nom affiché" , className: inp, ...fa,} )
+                , React.createElement('div', { className: "grid grid-cols-2 gap-2"  ,}
+                  , React.createElement('input', { value: newUser.username, onChange: e=>setNewUser(p=>({...p,username:e.target.value})), placeholder: "Identifiant", className: "bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none"        , ...fa,} )
+                  , React.createElement('input', { value: newUser.password, onChange: e=>setNewUser(p=>({...p,password:e.target.value})), placeholder: "Mot de passe"  , className: "bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none"        , ...fa,} )
+                )
+                , React.createElement('div', { className: "flex items-center gap-2 flex-wrap"   ,}
+                  , React.createElement('span', { className: "text-xs text-slate-500" ,}, "Rôle :" )
+                  , (isSeigneur?["user","admin","seigneur"]:["user","admin"]).map(r=>(
+                    React.createElement('button', { key: r, onClick: ()=>setNewUser(p=>({...p,role:r})),
+                      className: "px-3 py-1.5 rounded-xl text-xs font-bold "+(newUser.role===r?"text-white":"bg-sky-50 text-sky-600 border border-sky-200"),
+                      style: newUser.role===r?{background:BG}:{},}, r==="user"?"Utilisateur":r==="admin"?"Admin":"Seigneur")
+                  ))
+                  , React.createElement('button', { onClick: createUser, className: "ml-auto px-4 py-1.5 text-white text-xs font-bold rounded-xl"      , style: {background:"linear-gradient(135deg,#34d399,#059669)"},}, "Créer")
+                )
+              )
+            )
+          )
+        )
 
-        {isAdmin&&(
-          <div className="bg-white border border-red-100 rounded-2xl p-4 shadow-sm">
-            <div className="text-xs font-black text-red-500 uppercase tracking-widest mb-2">⚠ Zone danger</div>
-            <button onClick={()=>{if(window.confirm("Effacer l'historique des ventes ?")){setSales([]);showToast("Historique effacé","error");}}}
-              className="px-4 py-2 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-200">
-              Effacer l'historique des ventes
-            </button>
-          </div>
-        )}
+        , isAdmin&&(
+          React.createElement('div', { className: "bg-white border border-red-100 rounded-2xl p-4 shadow-sm"     ,}
+            , React.createElement('div', { className: "text-xs font-black text-red-500 uppercase tracking-widest mb-2"     ,}, "⚠ Zone danger"  )
+            , React.createElement('button', { onClick: ()=>{if(window.confirm("Effacer l'historique des ventes ?")){setSales([]);showToast("Historique effacé","error");}},
+              className: "px-4 py-2 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-200"        ,}, "Effacer l'historique des ventes"
 
-        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm text-xs text-slate-400 space-y-1">
-          <div className="font-bold text-slate-600 mb-2">Intégration SumUp</div>
-          <div>Deep Link <code className="bg-sky-50 px-1 rounded text-sky-600">sumupmerchant://</code></div>
-          <div>Remplace <code className="bg-sky-50 px-1 rounded text-sky-600">YOUR_AFFILIATE_KEY</code> par ta clé affilié.</div>
-          <a href="https://developer.sumup.com" target="_blank" rel="noreferrer" className="text-sky-500 underline font-semibold">developer.sumup.com</a>
-        </div>
-      </div>
-    )}
+            )
+          )
+        )
 
-  </main>
-</div>
+        , React.createElement('div', { className: "bg-white border border-sky-100 rounded-2xl p-4 shadow-sm text-xs text-slate-400 space-y-1"        ,}
+          , React.createElement('div', { className: "font-bold text-slate-600 mb-2"  ,}, "Intégration SumUp" )
+          , React.createElement('div', null, "Deep Link "  , React.createElement('code', { className: "bg-sky-50 px-1 rounded text-sky-600"   ,}, "sumupmerchant://"))
+          , React.createElement('div', null, "Remplace " , React.createElement('code', { className: "bg-sky-50 px-1 rounded text-sky-600"   ,}, "YOUR_AFFILIATE_KEY"), " par ta clé affilié."    )
+          , React.createElement('a', { href: "https://developer.sumup.com", target: "_blank", rel: "noreferrer", className: "text-sky-500 underline font-semibold"  ,}, "developer.sumup.com")
+        )
+      )
+    )
+
+  )
+)
 ```
 
 );

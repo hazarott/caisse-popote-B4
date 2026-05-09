@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Popote B4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react,env">
+const { useState, useEffect, useCallback } = React;
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SB_URL = “https://mfarjfsmgloycxfqwcrz.supabase.co”;
+const SB_KEY = “eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mYXJqZnNtZ2xveWN4ZnF3Y3J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTkyMjQsImV4cCI6MjA5Mzg3NTIyNH0.q25Igs2bXss7H5hWl6BHz95u7gXjBL5a4FA1FU6k9xs”;
+const SB_HDR = {
+“Content-Type”: “application/json”,
+“apikey”: SB_KEY,
+“Authorization”: “Bearer “ + SB_KEY,
+};
+
+async function dbGet(table) {
+const r = await fetch(SB_URL + “/rest/v1/” + table + “?select=*”, { headers: SB_HDR });
+if (!r.ok) throw new Error(await r.text());
+return r.json();
+}
+async function dbUpsert(table, rows) {
+const r = await fetch(SB_URL + “/rest/v1/” + table, {
+method: “POST”,
+headers: { …SB_HDR, “Prefer”: “resolution=merge-duplicates,return=representation” },
+body: JSON.stringify(rows),
+});
+if (!r.ok) throw new Error(await r.text());
+return r.json();
+}
+async function dbPatch(table, id, data) {
+const r = await fetch(SB_URL + “/rest/v1/” + table + “?id=eq.” + id, {
+method: “PATCH”,
+headers: { …SB_HDR, “Prefer”: “return=representation” },
+body: JSON.stringify(data),
+});
+if (!r.ok) throw new Error(await r.text());
+return r.json();
+}
+async function dbDelete(table, id) {
+const r = await fetch(SB_URL + “/rest/v1/” + table + “?id=eq.” + id, {
+method: “DELETE”, headers: SB_HDR,
+});
+if (!r.ok) throw new Error(await r.text());
+}
+function dbListen(table, cb) {
+const ws = new WebSocket(
+SB_URL.replace(“https://”, “wss://”) +
+“/realtime/v1/websocket?apikey=” + SB_KEY + “&vsn=1.0.0”
+);
+ws.onopen = () => ws.send(JSON.stringify({
+topic: “realtime:public:” + table, event: “phx_join”, payload: {}, ref: “1”
+}));
+ws.onmessage = (e) => {
+try {
+const m = JSON.parse(e.data);
+if (m.event === “INSERT” || m.event === “UPDATE” || m.event === “DELETE”) {
+cb(m.event, m.payload && (m.payload.record || m.payload.old_record));
+}
+} catch (_) {}
+};
+ws.onerror = () => {};
+return () => ws.close();
+}
+
+// ─── DONNÉES INITIALES ────────────────────────────────────────────────────────
+const INIT_PRODUCTS = [
+{ id: 1, name: “Coca-Cola”,        emoji: “\ud83e\udd64”, price: 1.5, stock: 24, category: “boisson” },
+{ id: 2, name: “Eau”,              emoji: “\ud83d\udca7”, price: 0.5, stock: 48, category: “boisson” },
+{ id: 3, name: “Jus d orange”,     emoji: “\ud83c\udf4a”, price: 1.5, stock: 12, category: “boisson” },
+{ id: 4, name: “Cafe”,             emoji: “\u2615”,        price: 1.0, stock: 50, category: “boisson” },
+{ id: 5, name: “Biere”,            emoji: “\ud83c\udf7a”, price: 2.0, stock: 20, category: “boisson” },
+{ id: 6, name: “Chips”,            emoji: “\ud83e\udd54”, price: 1.0, stock: 15, category: “snack”   },
+{ id: 7, name: “Barre chocolatee”, emoji: “\ud83c\udf6b”, price: 1.5, stock: 10, category: “snack”   },
+{ id: 8, name: “Sandwich”,         emoji: “\ud83e\udd6a”, price: 3.5, stock: 8,  category: “snack”   },
+];
+const INIT_MEMBERS = [
+{ id: 1, name: “Alice Martin”, balance: 10.0, transactions: [] },
+{ id: 2, name: “Bob Dupont”,   balance: 5.5,  transactions: [] },
+{ id: 3, name: “Clara Petit”,  balance: 20.0, transactions: [] },
+];
+const INIT_USERS = [
+{ id: 0, username: “seigneur”, password: “seigneur999”, role: “seigneur”, display_name: “Seigneur” },
+{ id: 1, username: “admin”,    password: “admin123”,    role: “admin”,    display_name: “Administrateur” },
+{ id: 2, username: “caissier”, password: “caisse123”,   role: “user”,     display_name: “Caissier” },
+];
+const LOGO_B64 = “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”;
+
+// ─── COMPOSANTS ───────────────────────────────────────────────────────────────
+function Badge({ children, color }) {
+const c = {
+red:    “bg-red-100 text-red-700 border-red-200”,
+orange: “bg-orange-100 text-orange-700 border-orange-200”,
+gray:   “bg-slate-100 text-slate-500 border-slate-200”,
+green:  “bg-emerald-100 text-emerald-700 border-emerald-200”,
+};
+return <span className={“text-xs font-bold px-2 py-0.5 rounded-full border “ + (c[color] || c.gray)}>{children}</span>;
+}
+
+function Toast({ msg, type, onClose }) {
+useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
+const bg = type === “success” ? “bg-emerald-500” : type === “error” ? “bg-red-500” : “bg-sky-500”;
+return (
+<div className={“fixed top-4 right-4 z-50 “ + bg + “ text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3”}
+style={{ animation: “slideInRight 0.25s ease” }}>
+<span>{type === “success” ? “✅” : type === “error” ? “❌” : “ℹ️”}</span>
+<span className="font-semibold text-sm">{msg}</span>
+<button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 text-xl leading-none">×</button>
+</div>
+);
+}
+
+function Modal({ title, children, onClose }) {
+return (
+<div className=“fixed inset-0 z-40 flex items-center justify-center p-4”
+style={{ background: “rgba(15,23,42,0.55)” }}>
+<div className=“bg-white border border-sky-100 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4”
+style={{ animation: “slideIn 0.2s ease” }}>
+<div className="flex items-center justify-between">
+<span className="font-bold text-base text-sky-700">{title}</span>
+<button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
+</div>
+{children}
+</div>
+</div>
+);
+}
+
+// ─── ÉCRAN DE CONNEXION ───────────────────────────────────────────────────────
+function LoginScreen({ users, loading, onLogin }) {
+const [username, setUsername] = useState(””);
+const [password, setPassword] = useState(””);
+const [error, setError]       = useState(””);
+const [showPwd, setShowPwd]   = useState(false);
+
+function attempt() {
+if (loading) return;
+const u = users.find(x => x.username === username && x.password === password);
+if (u) { onLogin(u); }
+else { setError(“Identifiant ou mot de passe incorrect”); setTimeout(() => setError(””), 3000); }
+}
+
+const inputCls = “w-full bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 outline-none transition-all”;
+const focusBlue = { onFocus: e => (e.target.style.borderColor = “#0ea5e9”), onBlur: e => (e.target.style.borderColor = “”) };
+
+return (
+<div className=“min-h-screen flex items-center justify-center p-4”
+style={{ background: “linear-gradient(135deg,#f0f9ff,#e0f2fe,#bae6fd)”, fontFamily: “Nunito,sans-serif” }}>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap'); @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}} @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} @keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}} @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}} .slide-in{animation:slideIn .2s ease} .pcard{transition:all .13s;cursor:pointer} .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,165,233,.15)} .pcard:active{transform:scale(.96)} ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#f0f9ff}::-webkit-scrollbar-thumb{background:#7dd3fc;border-radius:4px}`}</style>
+<div style={{ animation: “fadeUp .4s ease”, width: “100%”, maxWidth: 360 }}>
+<div style={{ textAlign: “center”, marginBottom: 32 }}>
+<img src={“data:image/png;base64,” + LOGO_B64} alt=“logo”
+className=“mx-auto mb-4 object-cover rounded-3xl”
+style={{ width: 96, height: 96, boxShadow: “0 8px 32px rgba(14,165,233,.25),0 2px 8px rgba(0,0,0,.12)” }} />
+<div className="text-2xl font-black text-sky-700 tracking-wide">POPOTE B4</div>
+{loading
+? <div className=“text-xs text-sky-400 font-semibold mt-1” style={{ animation: “blink 1.5s infinite” }}>🔄 Connexion base de données…</div>
+: <div className=“text-xs font-semibold mt-1” style={{ color: “#10b981” }}>● Base connectée</div>
+}
+</div>
+<div className=“bg-white rounded-3xl shadow-xl border border-sky-100” style={{ padding: 28 }}>
+<div style={{ marginBottom: 16 }}>
+<label className=“text-xs font-bold text-sky-600 uppercase tracking-widest block” style={{ marginBottom: 8 }}>Identifiant</label>
+<input value={username} onChange={e => setUsername(e.target.value)}
+onKeyDown={e => e.key === “Enter” && attempt()}
+placeholder=“votre identifiant” className={inputCls} {…focusBlue} />
+</div>
+<div style={{ marginBottom: 16 }}>
+<label className=“text-xs font-bold text-sky-600 uppercase tracking-widest block” style={{ marginBottom: 8 }}>Mot de passe</label>
+<div style={{ position: “relative” }}>
+<input type={showPwd ? “text” : “password”} value={password}
+onChange={e => setPassword(e.target.value)}
+onKeyDown={e => e.key === “Enter” && attempt()}
+placeholder=”••••••••” className={inputCls}
+style={{ paddingRight: 48 }} {…focusBlue} />
+<button onClick={() => setShowPwd(p => !p)}
+style={{ position: “absolute”, right: 12, top: “50%”, transform: “translateY(-50%)”, fontSize: 18 }}
+className=“text-slate-400 hover:text-sky-500”>
+{showPwd ? “🙈” : “👁️”}
+</button>
+</div>
+</div>
+{error && (
+<div className=“bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 text-center font-semibold”
+style={{ padding: “8px 12px”, marginBottom: 16 }}>❌ {error}</div>
+)}
+<button onClick={attempt} disabled={loading}
+className=“w-full font-black text-white text-sm rounded-2xl shadow-md”
+style={{ padding: “12px 0”, background: “linear-gradient(135deg,#38bdf8,#0369a1)”, opacity: loading ? .6 : 1 }}>
+{loading ? “Chargement…” : “Se connecter →”}
+</button>
+</div>
+<div className=“bg-white rounded-2xl border border-sky-100 text-xs text-slate-500”
+style={{ marginTop: 16, padding: 12, opacity: .85 }}>
+<div className=“font-bold text-slate-600” style={{ marginBottom: 4 }}>Comptes par défaut :</div>
+<div>· seigneur / seigneur999</div>
+<div>· admin / admin123</div>
+<div>· caissier / caisse123</div>
+</div>
+</div>
+</div>
+);
+}
+
+async function launchSumUp(amount, desc) {
+window.location.href = “sumupmerchant://pay/1.0?affiliate-key=YOUR_AFFILIATE_KEY&amount=” +
+amount.toFixed(2) + “&currency=EUR&title=” + encodeURIComponent(desc) +
+“&callbackurl=” + encodeURIComponent(window.location.href);
+return new Promise(r => setTimeout(r, 800));
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+export default function App() {
+const [products,      setProducts]      = useState([]);
+const [members,       setMembers]       = useState([]);
+const [sales,         setSales]         = useState([]);
+const [users,         setUsers]         = useState([]);
+const [currentUser,   setCurrentUser]   = useState(null);
+const [dbReady,       setDbReady]       = useState(false);
+const [syncStatus,    setSyncStatus]    = useState(“connecting”);
+
+const [cart,          setCart]          = useState([]);
+const [tab,           setTab]           = useState(“caisse”);
+const [payMode,       setPayMode]       = useState(null);
+const [selMember,     setSelMember]     = useState(null);
+const [toast,         setToast]         = useState(null);
+const [tpeStatus,     setTpeStatus]     = useState(“idle”);
+const [memberSearch,  setMemberSearch]  = useState(””);
+const [newMemberName, setNewMemberName] = useState(””);
+const [rechargeId,    setRechargeId]    = useState(null);
+const [rechargeAmt,   setRechargeAmt]   = useState(””);
+const [filterCat,     setFilterCat]     = useState(“tout”);
+const [showAddUser,   setShowAddUser]   = useState(false);
+const [newUser,       setNewUser]       = useState({ username:””, password:””, role:“user”, display_name:”” });
+const [editPwd,       setEditPwd]       = useState(null);
+const [showAddProd,   setShowAddProd]   = useState(false);
+const [newProd,       setNewProd]       = useState({ name:””, emoji:“🛒”, price:””, stock:””, category:“boisson” });
+const [refundId,      setRefundId]      = useState(null);
+const [recapEmail,    setRecapEmail]    = useState(””);
+const [recapPeriod,   setRecapPeriod]   = useState(“today”);
+
+const isSeigneur = currentUser?.role === “seigneur”;
+const isAdmin    = currentUser?.role === “admin” || isSeigneur;
+const showToast  = useCallback((msg, type=“success”) => setToast({ msg, type }), []);
+const total      = cart.reduce((s, i) => s + i.price * i.qty, 0);
+const visUsers   = isSeigneur ? users : users.filter(u => u.role !== “seigneur”);
+const fa         = { onFocus: e => (e.target.style.borderColor=”#0ea5e9”), onBlur: e => (e.target.style.borderColor=””) };
+const inp        = “w-full bg-sky-50 border border-sky-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 outline-none transition-all”;
+
+// ── INIT DB ──────────────────────────────────────────────────────────────
+useEffect(() => {
+(async () => {
+try {
+const [p, m, s, u] = await Promise.all([
+dbGet(“products”), dbGet(“members”), dbGet(“sales”), dbGet(“users”)
+]);
+if (u.length === 0) { await dbUpsert(“users”, INIT_USERS); setUsers(INIT_USERS); }
+else setUsers(u);
+if (p.length === 0) { await dbUpsert(“products”, INIT_PRODUCTS); setProducts(INIT_PRODUCTS); }
+else setProducts(p);
+if (m.length === 0) { await dbUpsert(“members”, INIT_MEMBERS); setMembers(INIT_MEMBERS); }
+else setMembers(m.map(x => ({ …x, transactions: x.transactions || [] })));
+setSales(s.map(x => ({ …x, items: x.items||[], refunded: !!x.refunded, refundedBy: x.refunded_by, refundDate: x.refund_date })));
+setSyncStatus(“ok”);
+} catch (err) {
+console.error(err);
+setSyncStatus(“error”);
+setProducts(INIT_PRODUCTS); setMembers(INIT_MEMBERS); setUsers(INIT_USERS);
+showToast(“Mode hors-ligne”, “error”);
+}
+setDbReady(true);
+})();
+}, []);
+
+// ── REALTIME ─────────────────────────────────────────────────────────────
+useEffect(() => {
+if (!dbReady || syncStatus === “error”) return;
+const unsubs = [
+dbListen(“products”, (ev, r) => setProducts(prev =>
+ev===“DELETE” ? prev.filter(x=>x.id!==r?.id) :
+ev===“INSERT” ? […prev.filter(x=>x.id!==r.id), r] :
+prev.map(x=>x.id===r.id?r:x)
+)),
+dbListen(“members”, (ev, r) => {
+const rec = r ? { …r, transactions: r.transactions||[] } : r;
+setMembers(prev =>
+ev===“DELETE” ? prev.filter(x=>x.id!==rec?.id) :
+ev===“INSERT” ? […prev.filter(x=>x.id!==rec.id), rec] :
+prev.map(x=>x.id===rec.id?rec:x)
+);
+}),
+dbListen(“sales”, (ev, r) => {
+const rec = r ? { …r, items:r.items||[], refunded:!!r.refunded, refundedBy:r.refunded_by, refundDate:r.refund_date } : r;
+setSales(prev =>
+ev===“DELETE” ? prev.filter(x=>x.id!==rec?.id) :
+ev===“INSERT” ? [rec, …prev.filter(x=>x.id!==rec.id)] :
+prev.map(x=>x.id===rec.id?rec:x)
+);
+}),
+dbListen(“users”, (ev, r) => setUsers(prev =>
+ev===“DELETE” ? prev.filter(x=>x.id!==r?.id) :
+ev===“INSERT” ? […prev.filter(x=>x.id!==r.id), r] :
+prev.map(x=>x.id===r.id?r:x)
+)),
+];
+return () => unsubs.forEach(fn => fn && fn());
+}, [dbReady, syncStatus]);
+
+if (!dbReady) return <LoginScreen users={[]} loading={true} onLogin={() => {}} />;
+if (!currentUser) return (
+<LoginScreen users={users} loading={false}
+onLogin={u => { setCurrentUser({ …u, displayName: u.display_name }); setTab(“caisse”); }} />
+);
+
+const dname = currentUser.display_name || currentUser.displayName || “?”;
+
+// ── PANIER ───────────────────────────────────────────────────────────────
+function addToCart(p) {
+if (p.stock <= 0) { showToast(“Rupture de stock !”, “error”); return; }
+setCart(prev => {
+const ex = prev.find(i => i.id === p.id);
+if (ex) {
+if (ex.qty >= p.stock) { showToast(“Stock insuffisant”, “error”); return prev; }
+return prev.map(i => i.id===p.id ? { …i, qty:i.qty+1 } : i);
+}
+return […prev, { …p, qty:1 }];
+});
+}
+const rmCart  = id  => setCart(prev => prev.filter(i => i.id !== id));
+const updQty  = (id,d) => setCart(prev => prev.map(i => i.id===id ? { …i, qty:Math.max(1,i.qty+d) } : i));
+const clrCart = ()  => { setCart([]); setPayMode(null); setSelMember(null); };
+
+// ── PAIEMENT ─────────────────────────────────────────────────────────────
+async function finalize(method) {
+const sale = { id:Date.now(), date:new Date().toISOString(), items:cart.map(i=>({…i})), total, method, operator:dname, refunded:false };
+const stockUpd = cart.map(ci => ({ …products.find(p=>p.id===ci.id), stock: products.find(p=>p.id===ci.id).stock - ci.qty }));
+try {
+await Promise.all([
+dbUpsert(“sales”, [{ …sale, refunded_by:null, refund_date:null }]),
+…stockUpd.map(p => dbPatch(“products”, p.id, { stock:p.stock }))
+]);
+setProducts(prev => prev.map(p => { const u=stockUpd.find(x=>x.id===p.id); return u||p; }));
+setSales(prev => [sale, …prev]);
+} catch { showToast(“Erreur sync”, “error”); }
+showToast(“Paiement validé – “ + total.toFixed(2) + “€”);
+clrCart();
+}
+async function payTPE() {
+if (!cart.length) return;
+setTpeStatus(“pending”);
+try { await launchSumUp(total, cart.map(i=>i.qty+“x”+i.name).join(”, “)); await finalize(“TPE SumUp”); setTpeStatus(“success”); setTimeout(()=>setTpeStatus(“idle”),2000); }
+catch { setTpeStatus(“error”); showToast(“Erreur TPE”,“error”); setTimeout(()=>setTpeStatus(“idle”),2000); }
+}
+const payCash = () => finalize(“Especes”);
+async function payMember() {
+if (!selMember) { showToast(“Selectionne un membre”,“error”); return; }
+const m = members.find(x=>x.id===selMember);
+if (m.balance < total) { showToast(“Solde insuffisant (”+m.balance.toFixed(2)+“€)”,“error”); return; }
+const bal = parseFloat((m.balance-total).toFixed(2));
+const txs = […(m.transactions||[]), { date:new Date().toISOString(), amount:-total, label:cart.map(i=>i.qty+“x “+i.name).join(”, “) }];
+try { await dbPatch(“members”, m.id, { balance:bal, transactions:txs }); setMembers(prev=>prev.map(x=>x.id===m.id?{…x,balance:bal,transactions:txs}:x)); }
+catch { showToast(“Erreur sync membre”,“error”); }
+await finalize(“Compte - “ + m.name);
+}
+
+// ── MEMBRES ──────────────────────────────────────────────────────────────
+async function addMember() {
+if (!newMemberName.trim()) return;
+const m = { id:Date.now(), name:newMemberName.trim(), balance:0, transactions:[] };
+try { await dbUpsert(“members”,[m]); setMembers(prev=>[…prev,m]); showToast(“Membre ajoute !”); }
+catch { showToast(“Erreur”,“error”); }
+setNewMemberName(””);
+}
+async function recharge(memberId, amount) {
+const amt = parseFloat(amount);
+if (isNaN(amt)||amt<=0) return;
+const m = members.find(x=>x.id===memberId);
+const bal = parseFloat((m.balance+amt).toFixed(2));
+const txs = […(m.transactions||[]), { date:new Date().toISOString(), amount:amt, label:“Rechargement” }];
+try { await dbPatch(“members”,memberId,{balance:bal,transactions:txs}); setMembers(prev=>prev.map(x=>x.id===memberId?{…x,balance:bal,transactions:txs}:x)); showToast(”+”+amt.toFixed(2)+“€ credite !”); }
+catch { showToast(“Erreur”,“error”); }
+setRechargeId(null); setRechargeAmt(””);
+}
+
+// ── UTILISATEURS ─────────────────────────────────────────────────────────
+async function createUser() {
+if (!newUser.username.trim()||!newUser.password.trim()||!newUser.display_name.trim()) { showToast(“Remplis tous les champs”,“error”); return; }
+if (users.find(u=>u.username===newUser.username)) { showToast(“Identifiant deja utilise”,“error”); return; }
+const role = (!isSeigneur&&newUser.role===“seigneur”)?“admin”:newUser.role;
+const u = { …newUser, role, id:Date.now() };
+try { await dbUpsert(“users”,[u]); setUsers(prev=>[…prev,u]); showToast(“Utilisateur cree !”); }
+catch { showToast(“Erreur”,“error”); }
+setNewUser({ username:””, password:””, role:“user”, display_name:”” }); setShowAddUser(false);
+}
+async function removeUser(id) {
+if (currentUser.id===id) { showToast(“Tu ne peux pas te supprimer”,“error”); return; }
+if (users.find(u=>u.id===id)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+try { await dbDelete(“users”,id); setUsers(prev=>prev.filter(u=>u.id!==id)); showToast(“Supprime”,“error”); }
+catch { showToast(“Erreur”,“error”); }
+}
+async function flipRole(id) {
+if (currentUser.id===id) { showToast(“Pas ton propre role”,“error”); return; }
+if (users.find(u=>u.id===id)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+const nr = users.find(u=>u.id===id)?.role===“admin”?“user”:“admin”;
+try { await dbPatch(“users”,id,{role:nr}); setUsers(prev=>prev.map(u=>u.id===id?{…u,role:nr}:u)); showToast(“Role modifie !”); }
+catch { showToast(“Erreur”,“error”); }
+}
+async function savePwd() {
+if (!editPwd?.newPwd?.trim()) { showToast(“Mot de passe vide”,“error”); return; }
+if (users.find(u=>u.id===editPwd.uid)?.role===“seigneur”&&!isSeigneur) { showToast(“Non autorise”,“error”); return; }
+try { await dbPatch(“users”,editPwd.uid,{password:editPwd.newPwd}); setUsers(prev=>prev.map(u=>u.id===editPwd.uid?{…u,password:editPwd.newPwd}:u)); setEditPwd(null); showToast(“Mot de passe mis a jour !”); }
+catch { showToast(“Erreur”,“error”); }
+}
+
+// ── PRODUITS ─────────────────────────────────────────────────────────────
+async function createProd() {
+const p=parseFloat(newProd.price), s=parseInt(newProd.stock);
+if (!newProd.name.trim()||isNaN(p)||p<=0||isNaN(s)||s<0) { showToast(“Donnees invalides”,“error”); return; }
+const prod = { id:Date.now(), name:newProd.name.trim(), emoji:newProd.emoji||“🛒”, price:p, stock:s, category:newProd.category };
+try { await dbUpsert(“products”,[prod]); setProducts(prev=>[…prev,prod]); showToast(“Produit ajoute !”); }
+catch { showToast(“Erreur”,“error”); }
+setNewProd({ name:””, emoji:“🛒”, price:””, stock:””, category:“boisson” }); setShowAddProd(false);
+}
+async function deleteProd(id) {
+try { await dbDelete(“products”,id); setProducts(prev=>prev.filter(p=>p.id!==id)); showToast(“Supprime”,“error”); }
+catch { showToast(“Erreur”,“error”); }
+}
+async function updPrice(id,price) {
+try { await dbPatch(“products”,id,{price}); setProducts(prev=>prev.map(x=>x.id===id?{…x,price}:x)); showToast(“Prix mis a jour”); }
+catch { showToast(“Erreur”,“error”); }
+}
+async function updStock(id,stock) {
+try { await dbPatch(“products”,id,{stock}); setProducts(prev=>prev.map(x=>x.id===id?{…x,stock}:x)); showToast(“Stock mis a jour”); }
+catch { showToast(“Erreur”,“error”); }
+}
+
+// ── REMBOURSEMENT ────────────────────────────────────────────────────────
+async function processRefund(sid) {
+const sale = sales.find(s=>s.id===sid);
+if (!sale||sale.refunded) { showToast(“Deja rembourse”,“error”); return; }
+const stockUpd = sale.items.map(ci=>{ const p=products.find(x=>x.id===ci.id); return p?{…p,stock:p.stock+ci.qty}:null; }).filter(Boolean);
+try {
+await Promise.all([
+dbPatch(“sales”,sid,{refunded:true,refunded_by:dname,refund_date:new Date().toISOString()}),
+…stockUpd.map(p=>dbPatch(“products”,p.id,{stock:p.stock}))
+]);
+if (sale.method.startsWith(“Compte - “)) {
+const mn = sale.method.replace(“Compte - “,””);
+const m = members.find(x=>x.name===mn);
+if (m) {
+const bal=parseFloat((m.balance+sale.total).toFixed(2));
+const txs=[…(m.transactions||[]),{date:new Date().toISOString(),amount:sale.total,label:“Remboursement”}];
+await dbPatch(“members”,m.id,{balance:bal,transactions:txs});
+setMembers(prev=>prev.map(x=>x.id===m.id?{…x,balance:bal,transactions:txs}:x));
+}
+}
+setProducts(prev=>prev.map(p=>{const u=stockUpd.find(x=>x.id===p.id);return u||p;}));
+setSales(prev=>prev.map(s=>s.id===sid?{…s,refunded:true,refundedBy:dname,refundDate:new Date().toISOString()}:s));
+setRefundId(null); showToast(“Remboursement effectue !”);
+} catch { showToast(“Erreur remboursement”,“error”); }
+}
+
+// ── RECAP EMAIL ──────────────────────────────────────────────────────────
+function sendRecap() {
+if (!recapEmail.includes(”@”)) { showToast(“Email invalide”,“error”); return; }
+const now = new Date();
+const f = sales.filter(s => {
+if (recapPeriod===“all”) return true;
+const d=new Date(s.date);
+if (recapPeriod===“today”) return d.toDateString()===now.toDateString();
+const w=new Date(now); w.setDate(now.getDate()-7); return d>=w;
+});
+const ca = f.reduce((s,v)=>s+v.total,0);
+const lines = f.map(s=>new Date(s.date).toLocaleString(“fr-FR”)+”|”+s.items?.map(i=>i.qty+“x”+i.name).join(”,”)+”|”+s.total.toFixed(2)+“EUR|”+s.method+”|”+s.operator+(s.refunded?” [REMBOURSE]”:””)).join(”\n”);
+const sub = encodeURIComponent(“Recap POPOTE B4 - “+new Date().toLocaleDateString(“fr-FR”));
+const body = encodeURIComponent(“RECAP POPOTE B4\nVentes: “+f.length+”\nCA: “+ca.toFixed(2)+“EUR\n\n”+lines);
+window.location.href = “mailto:”+recapEmail+”?subject=”+sub+”&body=”+body;
+showToast(“Ouverture messagerie…”,“info”);
+}
+
+// ── STATS ────────────────────────────────────────────────────────────────
+const totalCA   = sales.reduce((s,v)=>s+v.total,0);
+const topProds  = products.map(p=>({…p,sold:sales.reduce((s,v)=>s+(v.items?.find(i=>i.id===p.id)?.qty||0),0)})).sort((a,b)=>b.sold-a.sold).slice(0,5);
+const filtProd  = filterCat===“tout” ? products : products.filter(p=>p.category===filterCat);
+const medals    = [“🥇”,“🥈”,“🥉”];
+const vendors   = (() => {
+const m={};
+sales.forEach(s=>{ const op=s.operator||“Inconnu”; if(!m[op]) m[op]={name:op,n:0,ca:0,txs:[]}; m[op].n++;m[op].ca+=s.total;m[op].txs.push(s); });
+return Object.values(m).sort((a,b)=>b.ca-a.ca);
+})();
+
+const tabs = [
+{id:“caisse”,  lbl:“🛒 Caisse”},
+{id:“stock”,   lbl:“📦 Stock”},
+{id:“membres”, lbl:“👥 Membres”},
+{id:“stats”,   lbl:“📊 Stats”},
+…(isAdmin?[{id:“vendeurs”,lbl:“🏆 Vendeurs”},{id:“remboursement”,lbl:“↩️ Remboursements”}]:[]),
+{id:“settings”,lbl:“⚙️ Config”},
+];
+
+const BG = “linear-gradient(135deg,#38bdf8,#0369a1)”;
+
+return (
+<div className=“min-h-screen flex flex-col”
+style={{ background:“linear-gradient(160deg,#f0f9ff,#e0f2fe,#f8fafc)”, fontFamily:“Nunito,sans-serif”, color:”#1e293b” }}>
+
+```
+  {toast && <Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)} />}
+
+  {editPwd && (
+    <Modal title="🔑 Modifier mot de passe" onClose={()=>setEditPwd(null)}>
+      <div className="text-xs text-slate-500 mb-1">Compte : <b>{users.find(u=>u.id===editPwd.uid)?.display_name}</b></div>
+      <input value={editPwd.newPwd} onChange={e=>setEditPwd(p=>({...p,newPwd:e.target.value}))}
+        onKeyDown={e=>e.key==="Enter"&&savePwd()} placeholder="Nouveau mot de passe" className={inp} {...fa} />
+      <button onClick={savePwd} className="w-full py-2.5 rounded-xl font-bold text-white text-sm" style={{background:BG}}>Enregistrer</button>
+    </Modal>
+  )}
+
+  {showAddProd && (
+    <Modal title="➕ Nouveau produit" onClose={()=>setShowAddProd(false)}>
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <input value={newProd.emoji} onChange={e=>setNewProd(p=>({...p,emoji:e.target.value}))}
+            className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-center text-2xl w-16 outline-none" {...fa} />
+          <input value={newProd.name} onChange={e=>setNewProd(p=>({...p,name:e.target.value}))}
+            placeholder="Nom du produit" className={inp} {...fa} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div><label className="text-xs font-bold text-sky-600 block mb-1">Prix (€)</label>
+            <input type="number" value={newProd.price} onChange={e=>setNewProd(p=>({...p,price:e.target.value}))} min="0" step="0.1" className={inp} {...fa} /></div>
+          <div><label className="text-xs font-bold text-sky-600 block mb-1">Stock</label>
+            <input type="number" value={newProd.stock} onChange={e=>setNewProd(p=>({...p,stock:e.target.value}))} min="0" className={inp} {...fa} /></div>
+        </div>
+        <div className="flex gap-2">
+          {["boisson","snack","autre"].map(c=>(
+            <button key={c} onClick={()=>setNewProd(p=>({...p,category:c}))}
+              className={"flex-1 py-2 rounded-xl text-xs font-bold " + (newProd.category===c?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
+              style={newProd.category===c?{background:BG}:{}}>{c}</button>
+          ))}
+        </div>
+        <button onClick={createProd} className="w-full py-2.5 rounded-xl font-bold text-white text-sm" style={{background:BG}}>Ajouter</button>
+      </div>
+    </Modal>
+  )}
+
+  {refundId && (
+    <Modal title="↩️ Confirmer remboursement" onClose={()=>setRefundId(null)}>
+      {(() => {
+        const sale=sales.find(s=>s.id===refundId);
+        if (!sale) return null;
+        return (
+          <div className="space-y-3">
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-1">
+              <div className="text-xs text-slate-500">{new Date(sale.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</div>
+              <div className="text-xs text-slate-600 font-semibold">{sale.items?.map(i=>i.qty+"×"+i.name).join(", ")}</div>
+              <div className="text-sm font-black text-red-600">{sale.total.toFixed(2)}€ – {sale.method}</div>
+            </div>
+            <p className="text-xs text-slate-500">Stock recrédité. Solde membre remboursé si applicable.</p>
+            <div className="flex gap-2">
+              <button onClick={()=>setRefundId(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold">Annuler</button>
+              <button onClick={()=>processRefund(refundId)} className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold"
+                style={{background:"linear-gradient(135deg,#f87171,#dc2626)"}}>Confirmer</button>
+            </div>
+          </div>
+        );
+      })()}
+    </Modal>
+  )}
+
+  {/* HEADER */}
+  <header className="bg-white border-b border-sky-100 px-4 py-3 flex items-center justify-between shadow-sm">
+    <div className="flex items-center gap-3">
+      <img src={"data:image/png;base64,"+LOGO_B64} alt="logo" className="rounded-xl object-contain" style={{width:36,height:36}} />
+      <div>
+        <div className="text-base font-black text-sky-700 tracking-wide leading-tight">POPOTE B4</div>
+        <div className="flex items-center gap-1">
+          <div className="rounded-full" style={{width:6,height:6,background:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"}} />
+          <span className="text-xs font-semibold" style={{color:syncStatus==="ok"?"#10b981":syncStatus==="error"?"#ef4444":"#f59e0b"}}>
+            {syncStatus==="ok"?"Synchronisé":syncStatus==="error"?"Hors-ligne":"Connexion..."}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white" style={{background:BG}}>
+          {dname.charAt(0).toUpperCase()}
+        </div>
+        <span className="hidden sm:block text-sm font-bold text-slate-700">{dname}</span>
+      </div>
+      <button onClick={()=>{setCurrentUser(null);setCart([]);setPayMode(null);}}
+        className="px-4 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-600 text-xs font-bold rounded-xl border border-sky-200">
+        Déconnexion
+      </button>
+    </div>
+  </header>
+
+  <nav className="bg-white border-b border-sky-100 flex px-1 overflow-x-auto shadow-sm">
+    {tabs.map(({id,lbl})=>(
+      <button key={id} onClick={()=>setTab(id)}
+        className={"px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all " + (tab===id?"border-sky-500 text-sky-600":"border-transparent text-slate-400 hover:text-sky-500")}>
+        {lbl}
+      </button>
+    ))}
+  </nav>
+
+  <main className="flex-1 overflow-auto">
+
+    {/* CAISSE */}
+    {tab==="caisse" && (
+      <div className="flex flex-col lg:flex-row h-full">
+        <div className="flex-1 p-4">
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {["tout","boisson","snack","autre"].map(c=>(
+              <button key={c} onClick={()=>setFilterCat(c)}
+                className={"px-4 py-1.5 rounded-full text-xs font-bold border transition-all " + (filterCat===c?"text-white border-transparent":"bg-white text-slate-500 border-sky-200")}
+                style={filterCat===c?{background:BG}:{}}>{c==="tout"?"Tout":c.charAt(0).toUpperCase()+c.slice(1)}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {filtProd.map(p=>(
+              <button key={p.id} onClick={()=>addToCart(p)}
+                className={"pcard bg-white border rounded-2xl p-3 text-left relative " + (p.stock===0?"opacity-40 cursor-not-allowed border-slate-200":"border-sky-100")}>
+                <div className="text-3xl mb-2">{p.emoji}</div>
+                <div className="text-xs font-bold text-slate-700 leading-tight">{p.name}</div>
+                <div className="font-black text-sky-600 text-sm mt-1">{p.price.toFixed(2)}€</div>
+                <div className={"absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full " + (p.stock<=3?"bg-red-100 text-red-600":"bg-sky-50 text-sky-400")}>
+                  {p.stock<=0?"rupt.":"×"+p.stock}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-sky-100 flex flex-col shadow-xl">
+          <div className="p-4 border-b border-sky-50 flex justify-between items-center">
+            <span className="text-sm font-black text-slate-700">🛒 Commande</span>
+            {cart.length>0&&<button onClick={clrCart} className="text-xs text-red-400 font-bold">Vider</button>}
+          </div>
+          <div className="flex-1 overflow-auto p-4 space-y-2">
+            {cart.length===0?<div className="text-slate-300 text-xs text-center py-8">Aucun article</div>
+              :cart.map(item=>(
+                <div key={item.id} className="slide-in flex items-center gap-2 bg-sky-50 rounded-xl px-3 py-2 border border-sky-100">
+                  <span className="text-lg">{item.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-700 truncate">{item.name}</div>
+                    <div className="text-sky-600 text-xs font-bold">{(item.price*item.qty).toFixed(2)}€</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={()=>updQty(item.id,-1)} className="w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold">−</button>
+                    <span className="text-xs w-5 text-center font-bold">{item.qty}</span>
+                    <button onClick={()=>updQty(item.id,1)} className="w-5 h-5 rounded-lg bg-sky-100 text-sky-600 text-xs font-bold">+</button>
+                    <button onClick={()=>rmCart(item.id)} className="w-5 h-5 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1">×</button>
+                  </div>
+                </div>
+              ))}
+          </div>
+          <div className="p-4 border-t border-sky-50">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-slate-500 font-semibold text-sm">Total</span>
+              <span className="text-2xl font-black text-sky-600">{total.toFixed(2)}€</span>
+            </div>
+            {payMode===null&&cart.length>0&&(
+              <div className="space-y-2 slide-in">
+                <button onClick={payTPE} className={"w-full py-3 rounded-2xl font-black text-sm text-white "+(tpeStatus==="pending"?"opacity-70 cursor-wait":"")} style={{background:BG}}>
+                  {tpeStatus==="pending"?"⏳ Envoi...":"💳 TPE (SumUp)"}
+                </button>
+                <button onClick={payCash} className="w-full py-2 rounded-2xl font-bold text-sm bg-emerald-50 text-emerald-600 border border-emerald-200">💵 Espèces</button>
+                <button onClick={()=>setPayMode("member")} className="w-full py-2 rounded-2xl font-bold text-sm bg-sky-50 text-sky-600 border border-sky-200">👤 Compte membre</button>
+              </div>
+            )}
+            {payMode==="member"&&(
+              <div className="slide-in space-y-2">
+                <input value={memberSearch} onChange={e=>setMemberSearch(e.target.value)} placeholder="Rechercher..."
+                  className="w-full bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-xs outline-none" {...fa} />
+                <div className="max-h-40 overflow-auto space-y-1">
+                  {members.filter(m=>m.name.toLowerCase().includes(memberSearch.toLowerCase())).map(m=>(
+                    <button key={m.id} onClick={()=>setSelMember(m.id)}
+                      className={"w-full text-left px-3 py-2 rounded-xl text-xs font-semibold " + (selMember===m.id?"text-white":"bg-sky-50 text-slate-700 border border-sky-100")}
+                      style={selMember===m.id?{background:BG}:{}}>
+                      <div className="font-bold">{m.name}</div>
+                      <div className={selMember===m.id?"text-sky-100":m.balance<total?"text-red-500":"text-emerald-600"}>Solde: {m.balance.toFixed(2)}€</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={()=>{setPayMode(null);setSelMember(null);}} className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Annuler</button>
+                  <button onClick={payMember} disabled={!selMember} className="flex-1 py-2 rounded-xl text-white text-xs font-bold disabled:opacity-40" style={{background:BG}}>Valider</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* STOCK */}
+    {tab==="stock"&&(
+      <div className="p-4 space-y-3 max-w-2xl mx-auto">
+        <h2 className="text-base font-black text-sky-700 mb-4">Gestion du stock</h2>
+        {products.map(p=>(
+          <div key={p.id} className="bg-white border border-sky-100 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+            <span className="text-2xl">{p.emoji}</span>
+            <div className="flex-1"><div className="font-bold text-sm text-slate-700">{p.name}</div><div className="text-xs text-slate-400">{p.price.toFixed(2)}€ · {p.category}</div></div>
+            {isAdmin?(
+              <div className="flex items-center gap-2">
+                <button onClick={()=>updStock(p.id,Math.max(0,p.stock-1))} className="w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black">−</button>
+                <span className={"w-10 text-center font-black text-sm "+(p.stock<=3?"text-red-500":"text-slate-700")}>{p.stock}</span>
+                <button onClick={()=>updStock(p.id,p.stock+1)} className="w-7 h-7 rounded-lg bg-sky-100 text-sky-600 text-sm font-black">+</button>
+                <input type="number" placeholder="=" min="0" className="w-14 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none" {...fa}
+                  onKeyDown={e=>{if(e.key==="Enter"){const v=parseInt(e.target.value);if(!isNaN(v)&&v>=0){updStock(p.id,v);e.target.value="";}}}} />
+              </div>
+            ):<span className={"font-bold text-sm "+(p.stock<=3?"text-red-500":"text-slate-400")}>{p.stock} unités</span>}
+            {p.stock<=3&&p.stock>0&&<Badge color="orange">⚠ Bas</Badge>}
+            {p.stock===0&&<Badge color="red">Rupture</Badge>}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* MEMBRES */}
+    {tab==="membres"&&(
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-base font-black text-sky-700">Comptes membres</h2>
+        <div className="flex gap-2">
+          <input value={newMemberName} onChange={e=>setNewMemberName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addMember()}
+            placeholder="Nouveau membre..." className="flex-1 bg-white border border-sky-200 rounded-xl px-3 py-2 text-sm outline-none" {...fa} />
+          <button onClick={addMember} className="px-4 py-2 text-white font-bold rounded-xl text-sm" style={{background:BG}}>+ Ajouter</button>
+        </div>
+        {members.map(m=>(
+          <div key={m.id} className="bg-white border border-sky-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-white text-sm" style={{background:BG}}>{m.name.charAt(0)}</div>
+              <div className="flex-1"><div className="font-bold text-sm">{m.name}</div><div className={"text-sm font-black "+(m.balance>0?"text-emerald-600":"text-red-500")}>{m.balance.toFixed(2)}€</div></div>
+              <button onClick={()=>setRechargeId(rechargeId===m.id?null:m.id)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200">+ Recharger</button>
+            </div>
+            {rechargeId===m.id&&(
+              <div className="slide-in px-4 pb-4 flex gap-2 flex-wrap border-t border-sky-50 pt-3">
+                {[5,10,20,50].map(a=><button key={a} onClick={()=>recharge(m.id,a)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-xl border border-emerald-200">+{a}€</button>)}
+                <input type="number" value={rechargeAmt} onChange={e=>setRechargeAmt(e.target.value)} placeholder="Montant" className="w-24 bg-sky-50 border border-sky-200 rounded-xl px-2 text-xs outline-none" {...fa} />
+                <button onClick={()=>recharge(m.id,rechargeAmt)} className="px-3 py-1.5 text-white text-xs font-bold rounded-xl" style={{background:BG}}>OK</button>
+              </div>
+            )}
+            {(m.transactions||[]).length>0&&(
+              <div className="border-t border-sky-50 px-4 py-2 max-h-32 overflow-auto">
+                {[...(m.transactions||[])].reverse().slice(0,5).map((t,i)=>(
+                  <div key={i} className="flex justify-between items-center py-1 text-xs border-b border-sky-50 last:border-0">
+                    <span className="text-slate-400 truncate max-w-[60%]">{t.label}</span>
+                    <span className={"font-bold "+(t.amount<0?"text-red-500":"text-emerald-600")}>{t.amount>0?"+":""}{t.amount.toFixed(2)}€</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* STATS */}
+    {tab==="stats"&&(
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-base font-black text-sky-700">Statistiques</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"><div className="text-xs text-slate-400 mb-1">CA Total</div><div className="text-2xl font-black text-sky-600">{totalCA.toFixed(2)}€</div></div>
+          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm"><div className="text-xs text-slate-400 mb-1">Ventes</div><div className="text-2xl font-black text-slate-700">{sales.length}</div></div>
+        </div>
+        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm">
+          <div className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Top produits</div>
+          {topProds.map((p,i)=>(
+            <div key={p.id} className="flex items-center gap-3 py-2 border-b border-sky-50 last:border-0">
+              <span className="text-slate-400 text-xs w-4">{i+1}</span><span className="text-xl">{p.emoji}</span>
+              <span className="flex-1 text-sm text-slate-700 font-semibold">{p.name}</span>
+              <span className="text-xs text-slate-400">{p.sold} vendus</span>
+              <span className="text-xs text-sky-600 font-black">{(p.sold*p.price).toFixed(2)}€</span>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm">
+          <div className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Dernières ventes</div>
+          {sales.slice(0,10).map(s=>(
+            <div key={s.id} className="py-2 border-b border-sky-50 last:border-0">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">{new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</span>
+                <span className={"font-black "+(s.refunded?"text-slate-400 line-through":"text-sky-600")}>{s.total.toFixed(2)}€{s.refunded?" ↩️":""}</span>
+              </div>
+              <div className="text-xs text-slate-400 mt-0.5">{s.items?.map(i=>i.qty+"×"+i.name).join(", ")} · {s.method} · {s.operator}</div>
+            </div>
+          ))}
+          {sales.length===0&&<div className="text-xs text-slate-300 text-center py-4">Aucune vente</div>}
+        </div>
+      </div>
+    )}
+
+    {/* VENDEURS */}
+    {tab==="vendeurs"&&isAdmin&&(
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-base font-black text-sky-700">🏆 Classement des vendeurs</h2>
+        {vendors.length===0?<div className="bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"><div className="text-4xl mb-2">📭</div><div className="text-sm text-slate-400">Aucune vente</div></div>
+        :vendors.map((v,i)=>(
+          <div key={v.name} className={"bg-white border rounded-2xl overflow-hidden shadow-sm "+(i===0?"border-amber-200":i===1?"border-slate-200":i===2?"border-orange-200":"border-sky-100")}>
+            <div className="p-4 flex items-center gap-4">
+              <div className={"w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 "+(i===0?"bg-amber-50":i===1?"bg-slate-100":i===2?"bg-orange-50":"bg-sky-50")}>
+                {i<3?medals[i]:<span className="text-slate-400 text-sm font-black">#{i+1}</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-slate-700 text-sm">{v.name}</div>
+                <div className="text-xs text-slate-400">{v.n} vente{v.n>1?"s":""} · Moy. {(v.ca/v.n).toFixed(2)}€</div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className={"text-xl font-black "+(i===0?"text-amber-500":i===1?"text-slate-500":i===2?"text-orange-500":"text-sky-600")}>{v.ca.toFixed(2)}€</div>
+                <div className="text-xs text-slate-400">CA total</div>
+              </div>
+            </div>
+            {vendors[0]?.ca>0&&<div className="px-4 pb-3"><div className="h-1.5 bg-sky-50 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{width:(v.ca/vendors[0].ca*100)+"%",background:i===0?"linear-gradient(90deg,#fbbf24,#f59e0b)":i===1?"linear-gradient(90deg,#94a3b8,#64748b)":i===2?"linear-gradient(90deg,#fb923c,#ea580c)":BG}} /></div></div>}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* REMBOURSEMENTS */}
+    {tab==="remboursement"&&isAdmin&&(
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-base font-black text-sky-700">↩️ Remboursements</h2>
+        {sales.length===0?<div className="bg-white border border-sky-100 rounded-2xl p-8 text-center shadow-sm"><div className="text-4xl mb-2">📭</div><div className="text-sm text-slate-400">Aucune vente</div></div>
+        :sales.map(s=>(
+          <div key={s.id} className={"bg-white border rounded-2xl p-4 shadow-sm "+(s.refunded?"border-slate-200 opacity-60":"border-sky-100")}>
+            <div className="flex items-start gap-3">
+              <div className={"w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 "+(s.refunded?"bg-slate-100":"bg-red-50")}>{s.refunded?"✅":"🧾"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400">{new Date(s.date).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}</span>
+                  <span className={"text-sm font-black "+(s.refunded?"text-slate-400":"text-sky-600")}>{s.total.toFixed(2)}€</span>
+                </div>
+                <div className="text-xs text-slate-600 font-semibold mt-0.5 truncate">{s.items?.map(i=>i.qty+"×"+i.name).join(", ")}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{s.method} · {s.operator}</div>
+                {s.refunded&&s.refundDate&&<div className="text-xs text-emerald-600 font-bold mt-1">✅ Remboursé le {new Date(s.refundDate).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})} par {s.refundedBy}</div>}
+              </div>
+              {!s.refunded&&<button onClick={()=>setRefundId(s.id)} className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200">Rembourser</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* SETTINGS */}
+    {tab==="settings"&&(
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-base font-black text-sky-700">Configuration</h2>
+
+        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Produits & Prix</div>
+            {isAdmin?<button onClick={()=>setShowAddProd(true)} className="px-3 py-1 text-white text-xs font-bold rounded-xl" style={{background:BG}}>+ Nouveau</button>:<Badge color="gray">🔒 Admin requis</Badge>}
+          </div>
+          {products.map(p=>(
+            <div key={p.id} className="flex items-center gap-2">
+              <span className="text-xl">{p.emoji}</span>
+              <span className="flex-1 text-sm text-slate-700 font-semibold truncate">{p.name}</span>
+              {isAdmin?(
+                <div className="flex items-center gap-1">
+                  <input type="number" defaultValue={p.price} step="0.1" min="0"
+                    className="w-20 bg-sky-50 border border-sky-200 rounded-lg px-2 py-1 text-xs text-center outline-none" {...fa}
+                    onBlur={e=>{const v=parseFloat(e.target.value);if(!isNaN(v)&&v>0)updPrice(p.id,v);}} />
+                  <span className="text-xs text-slate-400">€</span>
+                  <button onClick={()=>deleteProd(p.id)} className="w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold ml-1">×</button>
+                </div>
+              ):<span className="text-sm text-slate-400 font-bold">{p.price.toFixed(2)}€</span>}
+            </div>
+          ))}
+        </div>
+
+        {isAdmin&&(
+          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="text-xs font-black text-sky-600 uppercase tracking-widest">📧 Récap par email</div>
+            <input type="email" value={recapEmail} onChange={e=>setRecapEmail(e.target.value)} placeholder="exemple@email.com" className={inp} {...fa} />
+            <div className="flex gap-2">
+              {[{v:"today",l:"Aujourd'hui"},{v:"week",l:"7 jours"},{v:"all",l:"Tout"}].map(p=>(
+                <button key={p.v} onClick={()=>setRecapPeriod(p.v)}
+                  className={"flex-1 py-2 rounded-xl text-xs font-bold "+(recapPeriod===p.v?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
+                  style={recapPeriod===p.v?{background:BG}:{}}>{p.l}</button>
+              ))}
+            </div>
+            {(()=>{
+              const now=new Date();
+              const f=sales.filter(s=>{if(recapPeriod==="all")return true;const d=new Date(s.date);if(recapPeriod==="today")return d.toDateString()===now.toDateString();const w=new Date(now);w.setDate(now.getDate()-7);return d>=w;});
+              return(
+                <div className="bg-sky-50 rounded-xl p-3 flex items-center justify-between border border-sky-100">
+                  <div><div className="text-xs font-bold text-slate-600">{f.length} vente{f.length>1?"s":""}</div><div className="text-xs text-sky-600 font-black">{f.reduce((s,v)=>s+v.total,0).toFixed(2)}€</div></div>
+                  <button onClick={sendRecap} className="px-4 py-2 text-white text-xs font-bold rounded-xl" style={{background:BG}}>Envoyer 📤</button>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {isAdmin&&(
+          <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Comptes utilisateurs</div>
+              <button onClick={()=>setShowAddUser(p=>!p)} className="text-xs text-sky-500 font-bold">{showAddUser?"▲ Masquer":"▼ Ajouter"}</button>
+            </div>
+            <div className="space-y-2">
+              {visUsers.map(u=>(
+                <div key={u.id} className="bg-sky-50 rounded-xl px-3 py-2 flex items-center gap-3 border border-sky-100">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0" style={{background:BG}}>{(u.display_name||"?").charAt(0)}</div>
+                  <div className="flex-1 min-w-0"><div className="text-xs font-bold text-slate-700">{u.display_name}</div><div className="text-xs text-slate-400">@{u.username}</div></div>
+                  {currentUser.id!==u.id&&(u.role!=="seigneur"||isSeigneur)&&(
+                    <button onClick={()=>flipRole(u.id)} className="px-2 py-1 rounded-lg bg-white text-sky-600 text-xs font-bold border border-sky-200">{u.role==="admin"?"Admin":"User"}</button>
+                  )}
+                  <button onClick={()=>setEditPwd({uid:u.id,newPwd:""})} className="px-2 py-1 rounded-lg bg-white text-slate-400 text-xs font-bold border border-slate-200">🔑</button>
+                  {currentUser.id!==u.id&&<button onClick={()=>removeUser(u.id)} className="w-6 h-6 rounded-lg bg-red-100 text-red-400 text-xs font-bold">×</button>}
+                </div>
+              ))}
+            </div>
+            {showAddUser&&(
+              <div className="slide-in border-t border-sky-100 pt-4 space-y-3">
+                <div className="text-xs font-black text-sky-600 uppercase tracking-widest">Nouvel utilisateur</div>
+                <input value={newUser.display_name} onChange={e=>setNewUser(p=>({...p,display_name:e.target.value}))} placeholder="Nom affiché" className={inp} {...fa} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={newUser.username} onChange={e=>setNewUser(p=>({...p,username:e.target.value}))} placeholder="Identifiant" className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none" {...fa} />
+                  <input value={newUser.password} onChange={e=>setNewUser(p=>({...p,password:e.target.value}))} placeholder="Mot de passe" className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none" {...fa} />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-slate-500">Rôle :</span>
+                  {(isSeigneur?["user","admin","seigneur"]:["user","admin"]).map(r=>(
+                    <button key={r} onClick={()=>setNewUser(p=>({...p,role:r}))}
+                      className={"px-3 py-1.5 rounded-xl text-xs font-bold "+(newUser.role===r?"text-white":"bg-sky-50 text-sky-600 border border-sky-200")}
+                      style={newUser.role===r?{background:BG}:{}}>{r==="user"?"Utilisateur":r==="admin"?"Admin":"Seigneur"}</button>
+                  ))}
+                  <button onClick={createUser} className="ml-auto px-4 py-1.5 text-white text-xs font-bold rounded-xl" style={{background:"linear-gradient(135deg,#34d399,#059669)"}}>Créer</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isAdmin&&(
+          <div className="bg-white border border-red-100 rounded-2xl p-4 shadow-sm">
+            <div className="text-xs font-black text-red-500 uppercase tracking-widest mb-2">⚠ Zone danger</div>
+            <button onClick={()=>{if(window.confirm("Effacer l'historique des ventes ?")){setSales([]);showToast("Historique effacé","error");}}}
+              className="px-4 py-2 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-200">
+              Effacer l'historique des ventes
+            </button>
+          </div>
+        )}
+
+        <div className="bg-white border border-sky-100 rounded-2xl p-4 shadow-sm text-xs text-slate-400 space-y-1">
+          <div className="font-bold text-slate-600 mb-2">Intégration SumUp</div>
+          <div>Deep Link <code className="bg-sky-50 px-1 rounded text-sky-600">sumupmerchant://</code></div>
+          <div>Remplace <code className="bg-sky-50 px-1 rounded text-sky-600">YOUR_AFFILIATE_KEY</code> par ta clé affilié.</div>
+          <a href="https://developer.sumup.com" target="_blank" rel="noreferrer" className="text-sky-500 underline font-semibold">developer.sumup.com</a>
+        </div>
+      </div>
+    )}
+
+  </main>
+</div>
+```
+
+);
+}
+
+const root = ReactDOM.createRoot(document.getElementById(“root”));
+root.render(React.createElement(App));
+</script>
+
+</body>
+</html>
